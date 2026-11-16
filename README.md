@@ -12,11 +12,11 @@ You can download and run **AICoaching** directly on any device:
 
 | Platform | Package Type | Download Link |
 | :--- | :--- | :--- |
-| 🪟 **Windows (10/11)** | Native Desktop App Launcher (`.bat`) | [Download `AICoaching_Windows_App.bat`](./downloads/AICoaching_Windows_App.bat) |
-| 🤖 **Android** | Standalone Offline-Capable App (`.html` / PWA) | [Download `AICoaching_Portable_App.html`](./downloads/AICoaching_Portable_App.html) |
-| 🍎 **iOS (iPhone & iPad)** | iOS Full-Screen Home Screen Profile (`.mobileconfig`) | [Download `AICoaching_iOS.mobileconfig`](./downloads/AICoaching_iOS.mobileconfig) |
-| 💻 **macOS (Apple Silicon & Intel)** | macOS App Launcher (`.command`) | [Download `AICoaching_Mac_App.command`](./downloads/AICoaching_Mac_App.command) |
-| 📦 **Universal Portable App** | Single-File Offline App (All Platforms) | [Download `AICoaching_Portable_App.html`](./downloads/AICoaching_Portable_App.html) |
+| 🪟 **Windows (10/11)** | Native Desktop App Launcher (`.bat`) | [Download `AICoaching_Windows_App.bat`](https://raw.githubusercontent.com/EmreOuzouns/AICoaching/main/downloads/AICoaching_Windows_App.bat) |
+| 🤖 **Android** | Standalone Offline-Capable App (`.html` / PWA) | [Download `AICoaching_Portable_App.html`](https://raw.githubusercontent.com/EmreOuzouns/AICoaching/main/downloads/AICoaching_Portable_App.html) |
+| 🍎 **iOS (iPhone & iPad)** | iOS Full-Screen Home Screen Profile (`.mobileconfig`) | [Download `AICoaching_iOS.mobileconfig`](https://raw.githubusercontent.com/EmreOuzouns/AICoaching/main/downloads/AICoaching_iOS.mobileconfig) |
+| 💻 **macOS (Apple Silicon & Intel)** | macOS App Launcher (`.command`) | [Download `AICoaching_Mac_App.command`](https://raw.githubusercontent.com/EmreOuzouns/AICoaching/main/downloads/AICoaching_Mac_App.command) |
+| 📦 **Universal Portable App** | Single-File Offline App (All Platforms) | [Download `AICoaching_Portable_App.html`](https://raw.githubusercontent.com/EmreOuzouns/AICoaching/main/downloads/AICoaching_Portable_App.html) |
 
 > **Tip:** When the local server is running, visit **`http://localhost:8090/indir`** (or open the in-app **Download Center**) for one-click installation on any device connected to your network.
 
@@ -64,7 +64,7 @@ You can download and run **AICoaching** directly on any device:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/emreouzoun/AICoaching.git
+   git clone https://github.com/EmreOuzouns/AICoaching.git
    cd AICoaching
    ```
 2. Start the server:
