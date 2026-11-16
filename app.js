@@ -666,16 +666,64 @@ function initOnboardingQuiz() {
     const stepDesc = document.getElementById("quiz-step-desc");
 
     let currentStep = 1;
-    const totalSteps = 6;
+    const totalSteps = 7;
 
     const stepDescs = {
         1: "Profil Bilgileri",
         2: "Hedef Tanımı",
         3: "Spor Seviyesi & Sıklığı",
         4: "Antrenman Mekanı & Süresi",
-        5: "Beslenme & API Key",
-        6: "AI Koç Tarzı"
+        5: "Beslenme Alışkanlığı",
+        6: "AI Koç Tarzı",
+        7: "Kendi Gemini API Anahtarınız"
     };
+
+    // Step 7 API key visibility & test controls
+    const obKeyInput = document.getElementById("ob-api-key");
+    const toggleObKeyBtn = document.getElementById("btn-toggle-ob-key");
+    const testObKeyBtn = document.getElementById("btn-test-ob-key");
+    const obKeyStatus = document.getElementById("ob-api-key-status");
+
+    if (toggleObKeyBtn && obKeyInput) {
+        toggleObKeyBtn.addEventListener("click", () => {
+            const type = obKeyInput.type === "password" ? "text" : "password";
+            obKeyInput.type = type;
+            toggleObKeyBtn.innerHTML = type === "password" ? '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
+        });
+    }
+
+    if (testObKeyBtn && obKeyInput && obKeyStatus) {
+        testObKeyBtn.addEventListener("click", async () => {
+            const key = obKeyInput.value.trim();
+            if (!key) {
+                obKeyStatus.style.color = "var(--neon-orange)";
+                obKeyStatus.textContent = "Lütfen test etmek için bir Gemini API anahtarı girin.";
+                return;
+            }
+            testObKeyBtn.disabled = true;
+            obKeyStatus.style.color = "var(--text-secondary)";
+            obKeyStatus.textContent = "API anahtarı kontrol ediliyor...";
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${encodeURIComponent(key)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Merhaba" }] }] })
+                });
+                if (res.ok) {
+                    obKeyStatus.style.color = "var(--neon-green)";
+                    obKeyStatus.textContent = "✅ API anahtarı doğrulandı! Yapay zeka özellikleri aktif.";
+                } else {
+                    obKeyStatus.style.color = "var(--neon-red)";
+                    obKeyStatus.textContent = "❌ API anahtarı geçersiz veya yetkisiz görünüyor.";
+                }
+            } catch (err) {
+                obKeyStatus.style.color = "var(--neon-red)";
+                obKeyStatus.textContent = "❌ Bağlantı hatası: " + err.message;
+            } finally {
+                testObKeyBtn.disabled = false;
+            }
+        });
+    }
 
     // Option Cards click handlers
     document.querySelectorAll(".option-card").forEach(card => {

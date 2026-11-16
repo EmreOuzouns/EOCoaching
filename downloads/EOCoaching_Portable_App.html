@@ -1649,12 +1649,12 @@ form {
                         <div class="quiz-progress-bar-bg"
                             style="width: 100%; height: 6px; background: rgba(15, 23, 42, 0.05); border-radius: 3px; overflow: hidden;">
                             <div id="quiz-progress-fill"
-                                style="width: 16.6%; height: 100%; background: var(--neon-orange); border-radius: 3px; transition: width 0.3s ease;">
+                                style="width: 14.3%; height: 100%; background: var(--neon-orange); border-radius: 3px; transition: width 0.3s ease;">
                             </div>
                         </div>
                         <div
                             style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
-                            <span id="quiz-step-text">Aşama 1 / 6</span>
+                            <span id="quiz-step-text">Aşama 1 / 7</span>
                             <span id="quiz-step-desc">Profil Bilgileri</span>
                         </div>
                     </div>
@@ -1875,14 +1875,6 @@ form {
                             </div>
                         </div>
                         <input type="hidden" id="ob-diet-pref" value="anything">
-
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label for="ob-api-key">Gemini API Key (Yapay Zeka Program Üretimi İçin)</label>
-                            <input type="password" id="ob-api-key"
-                                placeholder="AIzaSy... (Boş bırakırsanız standart hazır şablonlar kurulur)">
-                            <p class="subtitle" style="font-size:0.75rem; margin-top:4px;">Gemini API anahtarınız
-                                tarayıcınızda ve yerel sunucuda güvenle saklanır.</p>
-                        </div>
                     </div>
 
                     <!-- Step 6: AI Koç Rolü / Hitap Tarzı -->
@@ -1912,6 +1904,43 @@ form {
                             </div>
                         </div>
                         <input type="hidden" id="ob-tone" value="brom">
+                    </div>
+
+                    <!-- Step 7: Kendi Gemini API Anahtarınız -->
+                    <div class="quiz-step hidden" data-step="7">
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">
+                            <i class="fa-solid fa-key text-neon-orange"></i> Kendi Gemini API Anahtarınız
+                        </h4>
+                        <p class="subtitle" style="margin-bottom: 14px;">
+                            Her kullanıcı uygulamadaki yapay zeka özelliklerini (sohbet, program üretimi, fotoğraflı besin analizi) <strong>kendi ücretsiz Gemini API anahtarı</strong> ile kullanır. Anahtarınız yalnızca sizin cihazınızda saklanır ve başka kimseyle paylaşılmaz.
+                        </p>
+
+                        <div style="background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                <strong style="color: var(--text-primary); display:block;">API Anahtarınız Yok mu?</strong>
+                                Google AI Studio üzerinden 1 dakikada ücretsiz anahtar oluşturabilirsiniz.
+                            </div>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="text-decoration:none; border-color: var(--neon-orange); color: var(--neon-orange);">
+                                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ücretsiz API Key Al
+                            </a>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ob-api-key">Gemini API Key (Opsiyonel)</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="ob-api-key"
+                                    placeholder="AIzaSy... (Boş bırakırsanız standart hazır şablonlar kurulur)">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-ob-key" title="Göster / Gizle">
+                                    <i class="fa-solid fa-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-test-ob-key" title="Anahtarı Test Et">
+                                    <i class="fa-solid fa-vial"></i> Test Et
+                                </button>
+                            </div>
+                            <p id="ob-api-key-status" class="subtitle" style="font-size:0.75rem; margin-top:6px; margin-bottom:0;">
+                                İsterseniz boş bırakıp devam edebilirsiniz; daha sonra Ayarlar sekmesinden de ekleyebilirsiniz.
+                            </p>
+                        </div>
                     </div>
 
                     <!-- Quiz Navigation Buttons -->
@@ -3772,16 +3801,64 @@ function initOnboardingQuiz() {
     const stepDesc = document.getElementById("quiz-step-desc");
 
     let currentStep = 1;
-    const totalSteps = 6;
+    const totalSteps = 7;
 
     const stepDescs = {
         1: "Profil Bilgileri",
         2: "Hedef Tanımı",
         3: "Spor Seviyesi & Sıklığı",
         4: "Antrenman Mekanı & Süresi",
-        5: "Beslenme & API Key",
-        6: "AI Koç Tarzı"
+        5: "Beslenme Alışkanlığı",
+        6: "AI Koç Tarzı",
+        7: "Kendi Gemini API Anahtarınız"
     };
+
+    // Step 7 API key visibility & test controls
+    const obKeyInput = document.getElementById("ob-api-key");
+    const toggleObKeyBtn = document.getElementById("btn-toggle-ob-key");
+    const testObKeyBtn = document.getElementById("btn-test-ob-key");
+    const obKeyStatus = document.getElementById("ob-api-key-status");
+
+    if (toggleObKeyBtn && obKeyInput) {
+        toggleObKeyBtn.addEventListener("click", () => {
+            const type = obKeyInput.type === "password" ? "text" : "password";
+            obKeyInput.type = type;
+            toggleObKeyBtn.innerHTML = type === "password" ? '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
+        });
+    }
+
+    if (testObKeyBtn && obKeyInput && obKeyStatus) {
+        testObKeyBtn.addEventListener("click", async () => {
+            const key = obKeyInput.value.trim();
+            if (!key) {
+                obKeyStatus.style.color = "var(--neon-orange)";
+                obKeyStatus.textContent = "Lütfen test etmek için bir Gemini API anahtarı girin.";
+                return;
+            }
+            testObKeyBtn.disabled = true;
+            obKeyStatus.style.color = "var(--text-secondary)";
+            obKeyStatus.textContent = "API anahtarı kontrol ediliyor...";
+            try {
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${encodeURIComponent(key)}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: "Merhaba" }] }] })
+                });
+                if (res.ok) {
+                    obKeyStatus.style.color = "var(--neon-green)";
+                    obKeyStatus.textContent = "✅ API anahtarı doğrulandı! Yapay zeka özellikleri aktif.";
+                } else {
+                    obKeyStatus.style.color = "var(--neon-red)";
+                    obKeyStatus.textContent = "❌ API anahtarı geçersiz veya yetkisiz görünüyor.";
+                }
+            } catch (err) {
+                obKeyStatus.style.color = "var(--neon-red)";
+                obKeyStatus.textContent = "❌ Bağlantı hatası: " + err.message;
+            } finally {
+                testObKeyBtn.disabled = false;
+            }
+        });
+    }
 
     // Option Cards click handlers
     document.querySelectorAll(".option-card").forEach(card => {
