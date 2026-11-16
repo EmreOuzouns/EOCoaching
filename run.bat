@@ -1,7 +1,7 @@
 @echo off
-title AICoaching v2 — SQLite Server
+title EOCoaching v2 — SQLite Server
 echo ==================================================
-echo   AICoaching v2 Server Starting...
+echo   EOCoaching v2 Server Starting...
 echo   Storage Engine: SQLite + Hybrid Offline Engine
 echo ==================================================
 

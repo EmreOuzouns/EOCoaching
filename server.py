@@ -760,50 +760,50 @@ def build_platform_package(platform: str, host_url: str) -> tuple:
     downloads_dir = os.path.join(BASE_DIR, "downloads")
 
     if platform == "windows":
-        exe_path = os.path.join(downloads_dir, "AICoaching_Windows.exe")
+        exe_path = os.path.join(downloads_dir, "EOCoaching_Windows.exe")
         if os.path.exists(exe_path):
             with open(exe_path, "rb") as f:
-                return f.read(), "AICoaching_Windows.exe", "application/vnd.microsoft.portable-executable"
+                return f.read(), "EOCoaching_Windows.exe", "application/vnd.microsoft.portable-executable"
         # Fallback to ZIP archive
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("AICoaching_App.html", build_standalone_html())
-        return buf.getvalue(), "AICoaching_Windows.zip", "application/zip"
+            zf.writestr("EOCoaching_App.html", build_standalone_html())
+        return buf.getvalue(), "EOCoaching_Windows.zip", "application/zip"
 
     elif platform == "mac":
-        zip_path = os.path.join(downloads_dir, "AICoaching_macOS.zip")
+        zip_path = os.path.join(downloads_dir, "EOCoaching_macOS.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "AICoaching_macOS.zip", "application/zip"
+                return f.read(), "EOCoaching_macOS.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("AICoaching.app/Contents/MacOS/AICoaching", build_mac_launcher(host_url))
-            zf.writestr("AICoaching_Offline_App.html", build_standalone_html())
-        return buf.getvalue(), "AICoaching_macOS.zip", "application/zip"
+            zf.writestr("EOCoaching.app/Contents/MacOS/EOCoaching", build_mac_launcher(host_url))
+            zf.writestr("EOCoaching_Offline_App.html", build_standalone_html())
+        return buf.getvalue(), "EOCoaching_macOS.zip", "application/zip"
 
     elif platform == "ios":
-        zip_path = os.path.join(downloads_dir, "AICoaching_iOS.zip")
+        zip_path = os.path.join(downloads_dir, "EOCoaching_iOS.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "AICoaching_iOS.zip", "application/zip"
+                return f.read(), "EOCoaching_iOS.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("AICoaching_iOS.mobileconfig", build_ios_mobileconfig(host_url))
-            zf.writestr("AICoaching_iOS_App.html", build_standalone_html())
-        return buf.getvalue(), "AICoaching_iOS.zip", "application/zip"
+            zf.writestr("EOCoaching_iOS.mobileconfig", build_ios_mobileconfig(host_url))
+            zf.writestr("EOCoaching_iOS_App.html", build_standalone_html())
+        return buf.getvalue(), "EOCoaching_iOS.zip", "application/zip"
 
     elif platform == "android":
-        zip_path = os.path.join(downloads_dir, "AICoaching_Android.zip")
+        zip_path = os.path.join(downloads_dir, "EOCoaching_Android.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "AICoaching_Android.zip", "application/zip"
+                return f.read(), "EOCoaching_Android.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("AICoaching_Android_App.html", build_standalone_html())
-        return buf.getvalue(), "AICoaching_Android.zip", "application/zip"
+            zf.writestr("EOCoaching_Android_App.html", build_standalone_html())
+        return buf.getvalue(), "EOCoaching_Android.zip", "application/zip"
 
     else:
-        return build_standalone_html(), "AICoaching_Portable_App.html", "application/octet-stream"
+        return build_standalone_html(), "EOCoaching_Portable_App.html", "application/octet-stream"
 
 
 # ─────────────────────────────────────────────
