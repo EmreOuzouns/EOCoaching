@@ -1,0 +1,17 @@
+# User data & local SQLite databases (never commit personal data or API keys)
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.json
+data/logs/
+data/users/
+data/json_backup/
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env

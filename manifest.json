@@ -1,0 +1,22 @@
+{
+  "name": "AICoaching — AI Fitness & Nutrition Coach",
+  "short_name": "AICoaching",
+  "description": "AI-powered personal fitness, progressive overload, nutrition, and daily routine coach.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmreOuzoun AI Coach — İndir (Windows / Android / iOS / Mac)</title>
+    <meta name="theme-color" content="#f97316">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dl-hero {
+            max-width: 920px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .dl-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 24px;
+        }
+        @media (max-width: 720px) {
+            .dl-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .dl-card {
+            background: rgba(255, 255, 255, 0.88);
+            border: 2px solid rgba(15, 23, 42, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 16px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.05);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .dl-card:hover, .dl-card.recommended {
+            transform: translateY(-3px);
+            border-color: var(--neon-orange);
+            box-shadow: 0 12px 35px rgba(249, 115, 22, 0.15);
+        }
+        .badge-rec {
+            display: none;
+            background: rgba(249, 115, 22, 0.12);
+            color: var(--neon-orange);
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .dl-card.recommended .badge-rec {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="dl-hero">
+        <div class="glass-card text-center" style="padding: 36px 24px;">
+            <div style="width:72px; height:72px; border-radius:20px; background:linear-gradient(135deg, var(--neon-orange), #ea580c); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-size:2rem; margin-bottom:14px; box-shadow:var(--shadow-orange);">
+                <i class="fa-solid fa-dumbbell"></i>
+            </div>
+            <h1 style="font-family:var(--font-header); font-size:2rem; font-weight:800;">EmreOuzoun <span class="text-neon-orange">AI Coach</span></h1>
+            <p class="subtitle" style="max-width:560px; margin:8px auto 20px;">
+                Kişiselleştirilmiş yapay zeka fitness, beslenme ve günlük rutin koçunuzu <strong>Windows, Android, iOS ve macOS</strong> cihazlarınıza tek tıkla indirin ve hemen kullanmaya başlayın.
+            </p>
+
+            <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+                <a href="/" class="btn btn-secondary">
+                    <i class="fa-solid fa-play"></i> Web Uygulamasını Aç
+                </a>
+                <a href="/api/download/standalone" download="AICoaching_Portable_App.html" class="btn btn-primary btn-glow">
+                    <i class="fa-solid fa-bolt"></i> Evrensel Tek Dosya Uygulamayı İndir (Tüm Cihazlar)
+                </a>
+                <button id="pwa-direct-btn" class="btn btn-success hidden">
+                    <i class="fa-solid fa-mobile-screen"></i> Cihaza Doğrudan Kur (PWA)
+                </button>
+            </div>
+        </div>
+
+        <div class="dl-grid">
+            <!-- Windows -->
+            <div class="dl-card" id="card-windows">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-brands fa-windows" style="font-size:2.2rem; color:#0ea5e9;"></i>
+                            <div>
+                                <h3 style="font-family:var(--font-header); font-size:1.2rem;">Windows</h3>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">Windows 10 / 11 (64-bit)</span>
+                            </div>
+                        </div>
+                        <span class="badge-rec">Cihazınız İçin Önerilen</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
+                        Windows masaüstünde çerçevesiz uygulama penceresi olarak çalışan başlatıcıyı (<code>.bat</code>) veya kurulum gerektirmeyen taşınabilir tek dosya sürümünü indirin.
+                    </p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="/api/download/windows" download="AICoaching_Windows_App.bat" class="btn btn-primary" style="text-decoration:none; background:#0ea5e9;">
+                        <i class="fa-solid fa-download"></i> Windows İçin İndir (.bat Başlatıcı)
+                    </a>
+                    <a href="/api/download/standalone" download="AICoaching_Windows_Portable.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+                        <i class="fa-solid fa-file-code"></i> Taşınabilir Sürümü İndir (Çevrimdışı Çalışır)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Android -->
+            <div class="dl-card" id="card-android">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-brands fa-android" style="font-size:2.2rem; color:#10b981;"></i>
+                            <div>
+                                <h3 style="font-family:var(--font-header); font-size:1.2rem;">Android</h3>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">Android Telefon & Tablet</span>
+                            </div>
+                        </div>
+                        <span class="badge-rec">Cihazınız İçin Önerilen</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
+                        Android cihazınıza indirip doğrudan açabilir veya Chrome menüsünden <strong>"Uygulamayı Yükle / Ana Ekrana Ekle"</strong> seçeneğiyle tam ekran kullanabilirsiniz.
+                    </p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="/api/download/android" download="AICoaching_Android_App.html" class="btn btn-primary" style="text-decoration:none; background:#10b981;">
+                        <i class="fa-solid fa-download"></i> Android İçin İndir
+                    </a>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="installPWAOrGuide('android')">
+                        <i class="fa-solid fa-mobile-screen-button"></i> Ana Ekrana Uygulama Olarak Ekle
+                    </button>
+                </div>
+            </div>
+
+            <!-- iOS -->
+            <div class="dl-card" id="card-ios">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-brands fa-apple" style="font-size:2.2rem; color:#0f172a;"></i>
+                            <div>
+                                <h3 style="font-family:var(--font-header); font-size:1.2rem;">iOS (iPhone & iPad)</h3>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">iOS 14+ WebClip & Taşınabilir App</span>
+                            </div>
+                        </div>
+                        <span class="badge-rec">Cihazınız İçin Önerilen</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
+                        iOS Ana Ekran uygulama profilini (<code>.mobileconfig</code>) veya çevrimdışı çalışan iOS uygulama paketini indirin. Safari'de <strong>Paylaş &rarr; Ana Ekrana Ekle</strong> ile de kurabilirsiniz.
+                    </p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="/api/download/ios" download="AICoaching_iOS.mobileconfig" class="btn btn-primary" style="text-decoration:none; background:#0f172a;">
+                        <i class="fa-solid fa-download"></i> iOS Uygulama Profilini İndir (.mobileconfig)
+                    </a>
+                    <a href="/api/download/standalone" download="AICoaching_iOS_App.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+                        <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama İndir (.html)
+                    </a>
+                </div>
+            </div>
+
+            <!-- macOS -->
+            <div class="dl-card" id="card-mac">
+                <div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fa-solid fa-laptop" style="font-size:2rem; color:#8b5cf6;"></i>
+                            <div>
+                                <h3 style="font-family:var(--font-header); font-size:1.2rem;">macOS</h3>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">MacBook / iMac (Apple Silicon & Intel)</span>
+                            </div>
+                        </div>
+                        <span class="badge-rec">Cihazınız İçin Önerilen</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
+                        macOS üzerinde bağımsız pencere olarak başlatan <code>.command</code> paketini veya tek dosya taşınabilir Mac uygulamasını indirin.
+                    </p>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <a href="/api/download/mac" download="AICoaching_Mac_App.command" class="btn btn-primary" style="text-decoration:none; background:#8b5cf6;">
+                        <i class="fa-solid fa-download"></i> Mac İçin İndir (.command)
+                    </a>
+                    <a href="/api/download/standalone" download="AICoaching_Mac_App.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
+                        <i class="fa-solid fa-box-archive"></i> Mac Taşınabilir Uygulama İndir (.html)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cihaz işletim sistemini algıla ve önerilen kartı vurgula
+        const ua = navigator.userAgent || "";
+        if (/android/i.test(ua)) {
+            document.getElementById("card-android")?.classList.add("recommended");
+        } else if (/iPad|iPhone|iPod/.test(ua)) {
+            document.getElementById("card-ios")?.classList.add("recommended");
+        } else if (/Macintosh|Mac OS X/.test(ua)) {
+            document.getElementById("card-mac")?.classList.add("recommended");
+        } else {
+            document.getElementById("card-windows")?.classList.add("recommended");
+        }
+
+        let deferredPrompt = null;
+        const pwaDirectBtn = document.getElementById("pwa-direct-btn");
+
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaDirectBtn?.classList.remove("hidden");
+        });
+
+        pwaDirectBtn?.addEventListener("click", async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            pwaDirectBtn.classList.add("hidden");
+        });
+
+        function installPWAOrGuide(platform) {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                return;
+            }
+            if (platform === "android") {
+                alert("Android Kurulumu:\n1. Üstteki 'Android İçin İndir' butonuna tıklayıp uygulamayı indirin VEYA\n2. Tarayıcınızın sağ üst köşesindeki (⋮) menüsünden 'Uygulamayı Yükle / Ana ekrana ekle' seçeneğine dokunun.");
+            }
+        }
+    </script>
+</body>
+</html>
