@@ -9,14 +9,14 @@
         try {
             const raw = localStorage.getItem(DB_KEY);
             if (raw) return JSON.parse(raw);
-        } catch (e) {}
+        } catch (e) { }
         return { users: {}, logs: {}, chats: {}, favorites: {}, prs: {} };
     }
 
     function saveLocalDB(db) {
         try {
             localStorage.setItem(DB_KEY, JSON.stringify(db));
-        } catch (e) {}
+        } catch (e) { }
     }
 
     function jsonResponse(obj, status = 200) {
@@ -50,7 +50,7 @@
 
         let bodyData = {};
         if (options.body && typeof options.body === "string") {
-            try { bodyData = JSON.parse(options.body); } catch (e) {}
+            try { bodyData = JSON.parse(options.body); } catch (e) { }
         }
 
         if (path === "/api/profile") {
@@ -219,7 +219,236 @@
                         if (data && data.date) db.logs[user][data.date] = data;
                         saveLocalDB(db);
                     }
-                }).catch(() => {});
+                }).catch(() => { });
+            }
+            return res;
+        } catch (err) {
+            // Sunucu kapalıysa kesintisiz olarak yerel veritabanına (LocalStorage) geç
+            return handleOfflineAPI(urlStr, init);
+        }
+    };
+})();
+
+// ─── Hybrid Offline / Standalone LocalStorage API Fallback ──────────────────
+(function initHybridLocalDB() {
+    const nativeFetch = window.fetch.bind(window);
+    const DB_KEY = "eocoach_offline_db_v2";
+
+    function loadLocalDB() {
+        try {
+            const raw = localStorage.getItem(DB_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch (e) { }
+        return { users: {}, logs: {}, chats: {}, favorites: {}, prs: {} };
+    }
+
+    function saveLocalDB(db) {
+        try {
+            localStorage.setItem(DB_KEY, JSON.stringify(db));
+        } catch (e) { }
+    }
+
+    function jsonResponse(obj, status = 200) {
+        return new Response(JSON.stringify(obj), {
+            status,
+            headers: { "Content-Type": "application/json" }
+        });
+    }
+
+    function emptyLog(logDate) {
+        return {
+            date: logDate,
+            nutrition: { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0 },
+            workout: null,
+            recovery: { sleep_hours: 0, sleep_quality: 3, stress: 3, energy: 3, doms: [], wake_feeling: 3, focus_feeling: 3 },
+            routine: [],
+            meals: [],
+            weight: null,
+            notes: "",
+            dayClosed: false
+        };
+    }
+
+    async function handleOfflineAPI(urlStr, options = {}) {
+        const method = (options.method || "GET").toUpperCase();
+        const dummyBase = "http://localhost";
+        const u = new URL(urlStr, dummyBase);
+        const path = u.pathname;
+        const user = u.searchParams.get("user") || localStorage.getItem("active_username") || "default";
+        const db = loadLocalDB();
+
+        let bodyData = {};
+        if (options.body && typeof options.body === "string") {
+            try { bodyData = JSON.parse(options.body); } catch (e) { }
+        }
+
+        if (path === "/api/profile") {
+            if (method === "GET") {
+                const prof = db.users[user];
+                if (!prof) return jsonResponse({ detail: "Profile not found" }, 404);
+                return jsonResponse(prof);
+            } else if (method === "POST") {
+                db.users[user] = bodyData;
+                saveLocalDB(db);
+                return jsonResponse({ status: "success", message: "Profile saved (offline)" });
+            }
+        }
+
+        if (path === "/api/logs") {
+            if (method === "GET") {
+                const d = u.searchParams.get("date") || getLocalDateString(new Date());
+                const userLogs = db.logs[user] || {};
+                return jsonResponse(userLogs[d] || emptyLog(d));
+            } else if (method === "POST") {
+                const d = bodyData.date || getLocalDateString(new Date());
+                if (!db.logs[user]) db.logs[user] = {};
+                db.logs[user][d] = bodyData;
+                saveLocalDB(db);
+                return jsonResponse({ status: "success" });
+            }
+        }
+
+        if (path === "/api/logs/list") {
+            const userLogs = db.logs[user] || {};
+            return jsonResponse(Object.keys(userLogs).sort());
+        }
+
+        if (path === "/api/logs/copy-yesterday-meals") {
+            const targetDate = u.searchParams.get("target_date") || getLocalDateString(new Date());
+            const dt = new Date(targetDate);
+            dt.setDate(dt.getDate() - 1);
+            const yestStr = getLocalDateString(dt);
+            const prev = db.logs[user]?.[yestStr];
+            if (!prev || !prev.meals) return jsonResponse({ meals: [], nutrition: {} });
+            return jsonResponse({ meals: prev.meals, nutrition: prev.nutrition || {}, from_date: yestStr });
+        }
+
+        if (path === "/api/users/list") {
+            return jsonResponse(Object.keys(db.users));
+        }
+
+        if (path === "/api/social/users") {
+            const list = [];
+            for (const [uname, prof] of Object.entries(db.users)) {
+                if (prof.privacy === "private") continue;
+                list.push({
+                    username: uname,
+                    name: prof.name || uname,
+                    gender: prof.gender || "male",
+                    weight: prof.weight || 70,
+                    height: prof.height || 170,
+                    age: prof.age || 23,
+                    tone: prof.tone || "brom",
+                    privacy: prof.privacy || "public",
+                    prs: prof.prs || {},
+                    workout: prof.workoutTemplate
+                });
+            }
+            return jsonResponse(list);
+        }
+
+        if (path === "/api/chat") {
+            const chatDate = u.searchParams.get("chat_date") || bodyData.date || getLocalDateString(new Date());
+            const key = `${user}_${chatDate}`;
+            if (method === "GET") {
+                return jsonResponse(db.chats[key] || []);
+            } else if (method === "POST") {
+                if (!db.chats[key]) db.chats[key] = [];
+                db.chats[key].push({ sender: bodyData.sender, message: bodyData.message, created_at: new Date().toISOString() });
+                saveLocalDB(db);
+                return jsonResponse({ status: "success" });
+            } else if (method === "DELETE") {
+                db.chats[key] = [];
+                saveLocalDB(db);
+                return jsonResponse({ status: "success" });
+            }
+        }
+
+        if (path === "/api/favorites") {
+            if (!db.favorites[user]) db.favorites[user] = [];
+            if (method === "GET") {
+                return jsonResponse(db.favorites[user]);
+            } else if (method === "POST") {
+                db.favorites[user].push({
+                    id: Date.now(),
+                    name: bodyData.name || "Öğün",
+                    calories: parseInt(bodyData.calories) || 0,
+                    protein: parseInt(bodyData.protein) || 0,
+                    carbs: parseInt(bodyData.carbs) || 0,
+                    fat: parseInt(bodyData.fat) || 0
+                });
+                saveLocalDB(db);
+                return jsonResponse({ status: "success" });
+            }
+        }
+
+        if (path.startsWith("/api/favorites/") && method === "DELETE") {
+            const favId = parseInt(path.split("/api/favorites/")[1]);
+            if (db.favorites[user]) {
+                db.favorites[user] = db.favorites[user].filter(f => f.id !== favId);
+                saveLocalDB(db);
+            }
+            return jsonResponse({ status: "success" });
+        }
+
+        if (path === "/api/pr-history") {
+            if (!db.prs[user]) db.prs[user] = [];
+            if (method === "GET") return jsonResponse(db.prs[user]);
+            if (method === "POST") {
+                db.prs[user].push(bodyData);
+                saveLocalDB(db);
+                return jsonResponse({ status: "success" });
+            }
+        }
+
+        if (path === "/api/stats/streak") {
+            const dates = Object.keys(db.logs[user] || {}).sort().reverse();
+            return jsonResponse({ streak: dates.length > 0 ? 1 : 0, total_days: dates.length });
+        }
+
+        if (path === "/api/network-info") {
+            return jsonResponse({
+                lan_ip: "localhost",
+                port: 8090,
+                url: window.location.origin,
+                download_url: window.location.origin + "/indir"
+            });
+        }
+
+        return jsonResponse({ status: "ok" });
+    }
+
+    window.fetch = async function (input, init) {
+        const urlStr = typeof input === "string" ? input : (input.url || "");
+        const isLocalAPI = urlStr.startsWith("/api/") || urlStr.includes("/api/");
+
+        if (!isLocalAPI) {
+            return nativeFetch(input, init);
+        }
+
+        // Use local storage DB directly when running as a standalone portable app (file:// or AICOACHING_STANDALONE_MODE)
+        if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
+            return handleOfflineAPI(urlStr, init);
+        }
+
+        try {
+            const res = await nativeFetch(input, init);
+            // Sunucu yanıtlarını çevrimdışı kullanım için yerel önbelleğe yansıt
+            if (res.ok) {
+                const clone = res.clone();
+                clone.json().then(data => {
+                    const u = new URL(urlStr, window.location.origin);
+                    const user = u.searchParams.get("user") || localStorage.getItem("active_username") || "default";
+                    const db = loadLocalDB();
+                    if (u.pathname === "/api/profile" && (!init || !init.method || init.method === "GET")) {
+                        db.users[user] = data;
+                        saveLocalDB(db);
+                    } else if (u.pathname === "/api/logs" && (!init || !init.method || init.method === "GET")) {
+                        if (!db.logs[user]) db.logs[user] = {};
+                        if (data && data.date) db.logs[user][data.date] = data;
+                        saveLocalDB(db);
+                    }
+                }).catch(() => { });
             }
             return res;
         } catch (err) {
@@ -239,7 +468,7 @@ let state = {
 };
 
 let weightChartInstance = null;
-let trendChartInstance  = null;
+let trendChartInstance = null;
 
 // ─── Egzersiz Autocomplete Listesi ───────────────────────────────────────────
 const EXERCISE_LIST = [
@@ -304,7 +533,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initWorkoutSession();
     initExerciseAutocomplete();
     initMealFavorites();
-    
+
     // PWA & Onboarding Init
     registerServiceWorker();
     initPWAInstall();
@@ -386,9 +615,9 @@ function calculateNutritionTargets(p) {
     if (p.activity === "light") multiplier = 1.375;
     else if (p.activity === "moderate") multiplier = 1.55;
     else if (p.activity === "active") multiplier = 1.725;
-    
+
     const tdee = Math.round(bmr * multiplier);
-    
+
     let targetKcal = tdee;
     const diff = p.targetWeight - p.weight;
     const pace = parseFloat(p.goalPace || 0.5);
@@ -398,7 +627,7 @@ function calculateNutritionTargets(p) {
     } else if (diff > 0.5) {
         targetKcal = Math.round(tdee + (pace * 1000));
     }
-    
+
     if (targetKcal < 1200) targetKcal = 1200;
 
     const proteinG = Math.round(p.weight * 2.0);
@@ -435,10 +664,10 @@ function initOnboardingQuiz() {
     const fill = document.getElementById("quiz-progress-fill");
     const stepText = document.getElementById("quiz-step-text");
     const stepDesc = document.getElementById("quiz-step-desc");
-    
+
     let currentStep = 1;
     const totalSteps = 6;
-    
+
     const stepDescs = {
         1: "Profil Bilgileri",
         2: "Hedef Tanımı",
@@ -453,10 +682,10 @@ function initOnboardingQuiz() {
         card.addEventListener("click", () => {
             const inputId = card.getAttribute("data-input");
             const val = card.getAttribute("data-value");
-            
+
             // Set hidden input value
             document.getElementById(inputId).value = val;
-            
+
             // Toggle active class on option cards in same step with same data-input
             const parentStep = card.closest(".quiz-step");
             parentStep.querySelectorAll(`.option-card[data-input="${inputId}"]`).forEach(c => {
@@ -507,13 +736,13 @@ function initOnboardingQuiz() {
             const targetWeight = document.getElementById("ob-target-weight").value;
             const city = document.getElementById("ob-city").value.trim();
             const sleepTime = document.getElementById("ob-sleep-time").value;
-            
+
             if (!name || !age || !height || !weight || !targetWeight || !city || !sleepTime) {
                 alert("Lütfen tüm profil bilgilerini doldurun.");
                 return;
             }
         }
-        
+
         if (currentStep < totalSteps) {
             currentStep++;
             updateStep();
@@ -532,54 +761,54 @@ function initOnboardingQuiz() {
 function getFallbackWorkoutAndRoutine(goal, level, location, timeLimit, sleepTime, workoutDays) {
     let workoutName = "EO Başlangıç Programı";
     let exercises = [];
-    
+
     if (location === "gym") {
         if (goal === "hypertrophy" || goal === "health") {
             workoutName = "Kas Geliştirme (Hipertrofi) Şablonu";
             exercises = [
-                { name: "Incline Bench Press", sets: [{kg: 40, reps: 10, rir: 2}, {kg: 40, reps: 10, rir: 1}, {kg: 45, reps: 8, rir: 0}] },
-                { name: "Lat Pulldown (Sırt)", sets: [{kg: 35, reps: 10, rir: 2}, {kg: 40, reps: 10, rir: 1}] },
-                { name: "Lateral Raise (Omuz)", sets: [{kg: 7.5, reps: 12, rir: 2}, {kg: 7.5, reps: 12, rir: 0}] },
-                { name: "Biceps Curl", sets: [{kg: 10, reps: 12, rir: 2}, {kg: 10, reps: 10, rir: 1}] }
+                { name: "Incline Bench Press", sets: [{ kg: 40, reps: 10, rir: 2 }, { kg: 40, reps: 10, rir: 1 }, { kg: 45, reps: 8, rir: 0 }] },
+                { name: "Lat Pulldown (Sırt)", sets: [{ kg: 35, reps: 10, rir: 2 }, { kg: 40, reps: 10, rir: 1 }] },
+                { name: "Lateral Raise (Omuz)", sets: [{ kg: 7.5, reps: 12, rir: 2 }, { kg: 7.5, reps: 12, rir: 0 }] },
+                { name: "Biceps Curl", sets: [{ kg: 10, reps: 12, rir: 2 }, { kg: 10, reps: 10, rir: 1 }] }
             ];
         } else if (goal === "strength") {
             workoutName = "Güç Geliştirme Şablonu";
             exercises = [
-                { name: "Squat", sets: [{kg: 60, reps: 5, rir: 2}, {kg: 60, reps: 5, rir: 2}, {kg: 65, reps: 5, rir: 1}] },
-                { name: "Bench Press", sets: [{kg: 45, reps: 5, rir: 2}, {kg: 45, reps: 5, rir: 2}, {kg: 50, reps: 5, rir: 1}] },
-                { name: "Deadlift", sets: [{kg: 80, reps: 5, rir: 2}, {kg: 90, reps: 3, rir: 1}] }
+                { name: "Squat", sets: [{ kg: 60, reps: 5, rir: 2 }, { kg: 60, reps: 5, rir: 2 }, { kg: 65, reps: 5, rir: 1 }] },
+                { name: "Bench Press", sets: [{ kg: 45, reps: 5, rir: 2 }, { kg: 45, reps: 5, rir: 2 }, { kg: 50, reps: 5, rir: 1 }] },
+                { name: "Deadlift", sets: [{ kg: 80, reps: 5, rir: 2 }, { kg: 90, reps: 3, rir: 1 }] }
             ];
         } else { // fat_loss
             workoutName = "Yağ Yakımı / Kondisyon Şablonu";
             exercises = [
-                { name: "Leg Press", sets: [{kg: 60, reps: 12, rir: 2}, {kg: 70, reps: 12, rir: 1}] },
-                { name: "Dumbbell Shoulder Press", sets: [{kg: 10, reps: 12, rir: 2}, {kg: 12, reps: 10, rir: 1}] },
-                { name: "Seated Row", sets: [{kg: 30, reps: 12, rir: 2}, {kg: 35, reps: 12, rir: 1}] },
-                { name: "Treadmill Run (Interval)", sets: [{kg: 0, reps: 15, rir: 1}] }
+                { name: "Leg Press", sets: [{ kg: 60, reps: 12, rir: 2 }, { kg: 70, reps: 12, rir: 1 }] },
+                { name: "Dumbbell Shoulder Press", sets: [{ kg: 10, reps: 12, rir: 2 }, { kg: 12, reps: 10, rir: 1 }] },
+                { name: "Seated Row", sets: [{ kg: 30, reps: 12, rir: 2 }, { kg: 35, reps: 12, rir: 1 }] },
+                { name: "Treadmill Run (Interval)", sets: [{ kg: 0, reps: 15, rir: 1 }] }
             ];
         }
     } else if (location === "home_dumbbell") {
         workoutName = "Evde Dambıl Programı";
         exercises = [
-            { name: "Dumbbell Goblet Squat", sets: [{kg: 15, reps: 12, rir: 2}, {kg: 15, reps: 12, rir: 1}, {kg: 20, reps: 10, rir: 0}] },
-            { name: "Dumbbell Floor Press", sets: [{kg: 12.5, reps: 12, rir: 2}, {kg: 15, reps: 10, rir: 1}] },
-            { name: "Dumbbell One-Arm Row", sets: [{kg: 12.5, reps: 12, rir: 2}, {kg: 12.5, reps: 12, rir: 1}] },
-            { name: "Dumbbell Lateral Raise", sets: [{kg: 5, reps: 15, rir: 2}, {kg: 5, reps: 12, rir: 0}] }
+            { name: "Dumbbell Goblet Squat", sets: [{ kg: 15, reps: 12, rir: 2 }, { kg: 15, reps: 12, rir: 1 }, { kg: 20, reps: 10, rir: 0 }] },
+            { name: "Dumbbell Floor Press", sets: [{ kg: 12.5, reps: 12, rir: 2 }, { kg: 15, reps: 10, rir: 1 }] },
+            { name: "Dumbbell One-Arm Row", sets: [{ kg: 12.5, reps: 12, rir: 2 }, { kg: 12.5, reps: 12, rir: 1 }] },
+            { name: "Dumbbell Lateral Raise", sets: [{ kg: 5, reps: 15, rir: 2 }, { kg: 5, reps: 12, rir: 0 }] }
         ];
     } else { // calisthenics
         workoutName = "Vücut Ağırlığı (Calisthenics) Programı";
         exercises = [
-            { name: "Şınav (Push-Ups)", sets: [{kg: 0, reps: 15, rir: 2}, {kg: 0, reps: 15, rir: 1}, {kg: 0, reps: 12, rir: 0}] },
-            { name: "Barfiks (Pull-Ups)", sets: [{kg: 0, reps: 8, rir: 2}, {kg: 0, reps: 6, rir: 1}] },
-            { name: "Dips", sets: [{kg: 0, reps: 10, rir: 2}, {kg: 0, reps: 10, rir: 1}] },
-            { name: "Vücut Ağırlığı Squat", sets: [{kg: 0, reps: 20, rir: 2}, {kg: 0, reps: 20, rir: 1}] }
+            { name: "Şınav (Push-Ups)", sets: [{ kg: 0, reps: 15, rir: 2 }, { kg: 0, reps: 15, rir: 1 }, { kg: 0, reps: 12, rir: 0 }] },
+            { name: "Barfiks (Pull-Ups)", sets: [{ kg: 0, reps: 8, rir: 2 }, { kg: 0, reps: 6, rir: 1 }] },
+            { name: "Dips", sets: [{ kg: 0, reps: 10, rir: 2 }, { kg: 0, reps: 10, rir: 1 }] },
+            { name: "Vücut Ağırlığı Squat", sets: [{ kg: 0, reps: 20, rir: 2 }, { kg: 0, reps: 20, rir: 1 }] }
         ];
     }
 
     let [sleepH, sleepM] = sleepTime.split(":").map(Number);
     let wakeH = (sleepH - 7 + 24) % 24;
     let wakeTimeStr = `${String(wakeH).padStart(2, '0')}:${String(sleepM).padStart(2, '0')}`;
-    
+
     let routine = [
         { time: wakeTimeStr, title: "Uyanış, Hidrasyon & Esnetme", completed: false }
     ];
@@ -675,13 +904,13 @@ Kurallar:
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
-        
+
         if (response.ok) {
             const result = await response.json();
             const text = result.candidates[0].content.parts[0].text;
             const data = parseGeminiJSON(text);
             if (data.workout && data.routine) {
-                data.routine = data.routine.sort((a,b) => a.time.localeCompare(b.time));
+                data.routine = data.routine.sort((a, b) => a.time.localeCompare(b.time));
                 return data;
             }
         }
@@ -693,7 +922,7 @@ Kurallar:
 
 onboardingForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const name = document.getElementById("ob-name").value;
     const gender = document.getElementById("ob-gender").value;
     const tone = document.getElementById("ob-tone").value;
@@ -704,11 +933,11 @@ onboardingForm.addEventListener("submit", async (e) => {
     const activity = document.getElementById("ob-activity").value;
     const goalPace = document.getElementById("ob-goal-pace").value;
     const workoutDays = parseInt(document.getElementById("ob-workout-days").value);
-    
+
     const city = document.getElementById("ob-city").value || "Istanbul";
     const sleepTime = document.getElementById("ob-sleep-time").value || "23:00";
     const privacy = document.getElementById("ob-privacy").value || "public";
-    
+
     // New Quiz inputs
     const fitnessGoal = document.getElementById("ob-fitness-goal").value;
     const fitnessLevel = document.getElementById("ob-fitness-level").value;
@@ -716,7 +945,7 @@ onboardingForm.addEventListener("submit", async (e) => {
     const dietPref = document.getElementById("ob-diet-pref").value;
     const dailyTimeLimit = document.getElementById("ob-daily-time-limit").value;
     const apiKey = document.getElementById("ob-api-key").value.trim();
-    
+
     const newProfile = {
         name, gender, tone, age, height, weight, targetWeight, activity, goalPace, workoutDays,
         city, sleepTime, privacy,
@@ -724,7 +953,7 @@ onboardingForm.addEventListener("submit", async (e) => {
         fitnessGoal, fitnessLevel, workoutLocation, dietPref, dailyTimeLimit,
         prs: { squat: 0, bench_press: 0, deadlift: 0 }
     };
-    
+
     const targets = calculateNutritionTargets(newProfile);
     newProfile.targets = targets;
 
@@ -739,7 +968,7 @@ onboardingForm.addEventListener("submit", async (e) => {
     if (apiKey) {
         setupData = await generateAIWorkoutAndRoutine(apiKey, newProfile, fitnessGoal, fitnessLevel, workoutLocation, dietPref, dailyTimeLimit);
     }
-    
+
     if (!setupData) {
         // Fallback to local templates
         setupData = getFallbackWorkoutAndRoutine(fitnessGoal, fitnessLevel, workoutLocation, dailyTimeLimit, sleepTime, workoutDays);
@@ -755,22 +984,22 @@ onboardingForm.addEventListener("submit", async (e) => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(newProfile)
         });
-        
+
         if (response.ok) {
             state.profile = newProfile;
-            
+
             // Set today's daily log with the setup data
             const todayStr = getLocalDateString(new Date());
             const todayLog = {
                 date: todayStr,
-                nutrition: {calories: 0, protein: 0, carbs: 0, fat: 0, water: 0},
+                nutrition: { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0 },
                 workout: setupData.workout,
-                recovery: {sleep_hours: 8, sleep_quality: 4, stress: 3, energy: 3, doms: [], wake_feeling: 3, focus_feeling: 3},
+                recovery: { sleep_hours: 8, sleep_quality: 4, stress: 3, energy: 3, doms: [], wake_feeling: 3, focus_feeling: 3 },
                 routine: setupData.routine,
                 weight: weight,
                 notes: ""
             };
-            
+
             await fetch(apiURL("/api/logs"), {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -794,14 +1023,14 @@ onboardingForm.addEventListener("submit", async (e) => {
 function updateUserInfoUI() {
     if (!state.profile) return;
     sidebarName.textContent = state.profile.name;
-    
+
     const diff = state.profile.targetWeight - state.profile.weight;
     let goalText = "Kilo Koruma";
     if (diff < -0.5) goalText = "Definisyon (Kilo Verme)";
     else if (diff > 0.5) goalText = "Bulking (Kilo Alma)";
-    
+
     sidebarStatus.textContent = goalText;
-    
+
     headerWeight.textContent = `${state.profile.weight.toFixed(1)} kg`;
     headerTargetWeight.textContent = `${state.profile.targetWeight.toFixed(1)} kg`;
     headerCalories.textContent = `${state.profile.targets.calories} kcal`;
@@ -844,10 +1073,10 @@ async function addXP(amount, reason) {
     if (!state.profile) return;
     if (state.profile.level === undefined) state.profile.level = 1;
     if (state.profile.xp === undefined) state.profile.xp = 0;
-    
+
     state.profile.xp += amount;
     showToast(`+${amount} XP kazanıldı! (${reason})`, "success");
-    
+
     const xpNeeded = state.profile.level * 100;
     if (state.profile.xp >= xpNeeded) {
         state.profile.xp -= xpNeeded;
@@ -856,9 +1085,9 @@ async function addXP(amount, reason) {
         showToast(msg, "success");
         alert(msg);
     }
-    
+
     updateUserInfoUI();
-    
+
     fetch(apiURL("/api/profile"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -885,7 +1114,7 @@ function updateWelcomeMessage() {
     if (!welcomeText) return;
     const name = state.profile.name;
     const tone = state.profile.tone || "brom";
-    
+
     if (tone === "brom") {
         welcomeText.innerHTML = `Selam ${name} kral! Ben senin koçun EmreOuzoun AI. Profilini okudum brom. Bugünden itibaren hem kod/yazılım hedeflerini hem de spor salonundaki ağırlıklarını beraber uçuracağız. Bugün durumlar nasıl, ne yedik ne bastık? Soruları sor, gerisini bana bırak!`;
     } else if (tone === "champ") {
@@ -901,10 +1130,10 @@ function initTabNavigation() {
         link.addEventListener("click", (e) => {
             e.preventDefault();
             const tabName = link.getAttribute("data-tab");
-            
+
             navLinks.forEach(l => l.classList.remove("active"));
             tabContents.forEach(c => c.classList.remove("active"));
-            
+
             link.classList.add("active");
             document.getElementById(`tab-${tabName}`).classList.add("active");
 
@@ -937,7 +1166,7 @@ async function loadDailyData() {
         const response = await fetch(apiURL(`/api/logs?date=${state.currentDate}`));
         if (response.ok) {
             state.dailyLog = await response.json();
-            
+
             // Yeni parametreler için koruma
             if (!state.dailyLog.routine) {
                 state.dailyLog.routine = [];
@@ -948,14 +1177,14 @@ async function loadDailyData() {
             if (!state.dailyLog.recovery.focus_feeling) {
                 state.dailyLog.recovery.focus_feeling = 3;
             }
-            
+
             renderDashboard();
             renderWorkout();
             renderNutrition();
             renderRecovery();
             renderRoutine();
             renderInsights();
-            
+
             // Gün kilitli ise tüm girdileri devre dışı bırak
             disableAllInputs();
         }
@@ -983,27 +1212,27 @@ async function saveDailyWeightLog(w) {
     try {
         const response = await fetch(apiURL(`/api/logs?date=${state.currentDate}`));
         if (response.ok) logToSave = await response.json();
-    } catch (e) {}
-    
+    } catch (e) { }
+
     if (!logToSave) {
         logToSave = {
             date: state.currentDate,
-            nutrition: {calories: 0, protein: 0, carbs: 0, fat: 0, water: 0},
+            nutrition: { calories: 0, protein: 0, carbs: 0, fat: 0, water: 0 },
             workout: null,
-            recovery: {sleep_hours: 8, sleep_quality: 4, stress: 3, energy: 3, doms: [], wake_feeling: 3, focus_feeling: 3},
+            recovery: { sleep_hours: 8, sleep_quality: 4, stress: 3, energy: 3, doms: [], wake_feeling: 3, focus_feeling: 3 },
             routine: [],
             notes: ""
         };
     }
-    
+
     logToSave.weight = w;
-    
+
     await fetch(apiURL("/api/logs"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(logToSave)
     });
-    
+
     if (state.currentDate === todayStr && state.profile) {
         state.profile.weight = w;
         state.profile.targets = calculateNutritionTargets(state.profile);
@@ -1014,7 +1243,7 @@ async function saveDailyWeightLog(w) {
         });
         updateUserInfoUI();
     }
-    
+
     await loadDailyData();
     await loadWeightHistory();
 }
@@ -1022,42 +1251,42 @@ async function saveDailyWeightLog(w) {
 // 5. Dashboard Rendering
 function renderDashboard() {
     if (!state.dailyLog || !state.profile) return;
-    
+
     const targets = state.profile.targets;
     const log = state.dailyLog;
-    
+
     const takenKcal = log.nutrition.calories || 0;
     const targetKcal = targets.calories;
     document.getElementById("dashboard-kcal-taken").textContent = takenKcal;
     document.getElementById("dashboard-kcal-target").textContent = targetKcal;
-    
+
     const percent = Math.min(100, Math.round((takenKcal / targetKcal) * 100));
     const ring = document.getElementById("kcal-progress-ring");
     ring.style.background = `conic-gradient(var(--neon-orange) ${percent * 3.6}deg, var(--border-color) ${percent * 3.6}deg)`;
-    
+
     const waterL = log.nutrition.water || 0;
     const targetWater = targets.water || 3.0;
     document.getElementById("dashboard-water-val").textContent = `${waterL.toFixed(1)} / ${targetWater.toFixed(1)} L`;
     const waterPercent = Math.min(100, (waterL / targetWater) * 100);
     document.getElementById("dashboard-water-bar").style.width = `${waterPercent}%`;
-    
+
     const sleepH = log.recovery.sleep_hours || 0;
     document.getElementById("dashboard-sleep-val").textContent = `${sleepH.toFixed(1)} / 8 Saat`;
     const sleepPercent = Math.min(100, (sleepH / 8) * 100);
     document.getElementById("dashboard-sleep-bar").style.width = `${sleepPercent}%`;
-    
+
     const workoutDone = log.workout && log.workout.completed;
     document.getElementById("dashboard-workout-status").textContent = workoutDone ? "Tamamlandı" : "Yapılmadı";
     document.getElementById("dashboard-workout-bar").style.width = workoutDone ? "100%" : "0%";
-    
+
     const protG = log.nutrition.protein || 0;
     document.getElementById("macro-p-val").textContent = `${protG}g / ${targets.protein}g`;
     document.getElementById("macro-p-bar").style.width = `${Math.min(100, (protG / targets.protein) * 100)}%`;
-    
+
     const carbG = log.nutrition.carbs || 0;
     document.getElementById("macro-c-val").textContent = `${carbG}g / ${targets.carbs}g`;
     document.getElementById("macro-c-bar").style.width = `${Math.min(100, (carbG / targets.carbs) * 100)}%`;
-    
+
     const fatG = log.nutrition.fat || 0;
     document.getElementById("macro-f-val").textContent = `${fatG}g / ${targets.fat}g`;
     document.getElementById("macro-f-bar").style.width = `${Math.min(100, (fatG / targets.fat) * 100)}%`;
@@ -1179,10 +1408,10 @@ function renderWeightChart() {
     const ctx = document.getElementById('weightChart');
     if (!ctx) return;
     if (weightChartInstance) weightChartInstance.destroy();
-    
+
     const sortedHistory = [...state.weightHistory].slice(-10);
     if (sortedHistory.length === 0) {
-        sortedHistory.push({date: "Veri Yok", weight: state.profile ? state.profile.weight : 70});
+        sortedHistory.push({ date: "Veri Yok", weight: state.profile ? state.profile.weight : 70 });
     }
 
     const labels = sortedHistory.map(h => h.date);
@@ -1230,7 +1459,7 @@ function initWeightModal() {
     const closeBtn = document.getElementById("btn-close-weight-modal");
     const saveBtn = document.getElementById("btn-save-weight-modal");
     const input = document.getElementById("today-weight-input");
-    
+
     openBtn.addEventListener("click", () => {
         input.value = state.dailyLog.weight || state.profile.weight;
         modal.classList.remove("hidden");
@@ -1252,19 +1481,19 @@ let defaultWorkoutTemplates = {
     hypertrophy: {
         name: "Kas Geliştirme (Hipertrofi)",
         exercises: [
-            { name: "Incline Bench Press", sets: [{kg: 50, reps: 10, rir: 2}, {kg: 50, reps: 10, rir: 1}, {kg: 55, reps: 8, rir: 0}] },
-            { name: "Flat Dumbbell Press", sets: [{kg: 20, reps: 10, rir: 2}, {kg: 22, reps: 10, rir: 1}] },
-            { name: "Lat Pulldown (Sırt)", sets: [{kg: 45, reps: 10, rir: 2}, {kg: 50, reps: 10, rir: 1}] },
-            { name: "Lateral Raise (Omuz)", sets: [{kg: 10, reps: 12, rir: 2}, {kg: 10, reps: 12, rir: 0}] },
-            { name: "Biceps Curl", sets: [{kg: 12, reps: 12, rir: 2}, {kg: 12, reps: 12, rir: 1}] }
+            { name: "Incline Bench Press", sets: [{ kg: 50, reps: 10, rir: 2 }, { kg: 50, reps: 10, rir: 1 }, { kg: 55, reps: 8, rir: 0 }] },
+            { name: "Flat Dumbbell Press", sets: [{ kg: 20, reps: 10, rir: 2 }, { kg: 22, reps: 10, rir: 1 }] },
+            { name: "Lat Pulldown (Sırt)", sets: [{ kg: 45, reps: 10, rir: 2 }, { kg: 50, reps: 10, rir: 1 }] },
+            { name: "Lateral Raise (Omuz)", sets: [{ kg: 10, reps: 12, rir: 2 }, { kg: 10, reps: 12, rir: 0 }] },
+            { name: "Biceps Curl", sets: [{ kg: 12, reps: 12, rir: 2 }, { kg: 12, reps: 12, rir: 1 }] }
         ]
     },
     strength: {
         name: "Güç/Kuvvet Şablonu (Strength)",
         exercises: [
-            { name: "Squat", sets: [{kg: 80, reps: 5, rir: 2}, {kg: 85, reps: 5, rir: 2}, {kg: 90, reps: 5, rir: 1}] },
-            { name: "Bench Press", sets: [{kg: 60, reps: 5, rir: 2}, {kg: 65, reps: 5, rir: 2}, {kg: 70, reps: 5, rir: 1}] },
-            { name: "Deadlift", sets: [{kg: 100, reps: 5, rir: 2}, {kg: 110, reps: 3, rir: 1}] }
+            { name: "Squat", sets: [{ kg: 80, reps: 5, rir: 2 }, { kg: 85, reps: 5, rir: 2 }, { kg: 90, reps: 5, rir: 1 }] },
+            { name: "Bench Press", sets: [{ kg: 60, reps: 5, rir: 2 }, { kg: 65, reps: 5, rir: 2 }, { kg: 70, reps: 5, rir: 1 }] },
+            { name: "Deadlift", sets: [{ kg: 100, reps: 5, rir: 2 }, { kg: 110, reps: 3, rir: 1 }] }
         ]
     }
 };
@@ -1273,23 +1502,23 @@ function renderWorkout() {
     const emptyState = document.getElementById("workout-empty-state");
     const exerciseList = document.getElementById("exercise-list");
     const footer = document.getElementById("workout-footer");
-    
+
     if (!state.dailyLog || !state.dailyLog.workout) {
         emptyState.classList.remove("hidden");
         exerciseList.innerHTML = "";
         footer.classList.add("hidden");
         return;
     }
-    
+
     emptyState.classList.add("hidden");
     footer.classList.remove("hidden");
     exerciseList.innerHTML = "";
-    
+
     const workout = state.dailyLog.workout;
     workout.exercises.forEach((ex, exIdx) => {
         const card = document.createElement("div");
         card.className = "exercise-card fade-in";
-        
+
         let setsHTML = "";
         ex.sets.forEach((set, setIdx) => {
             setsHTML += `
@@ -1306,7 +1535,7 @@ function renderWorkout() {
                 </tr>
             `;
         });
-        
+
         card.innerHTML = `
             <div class="exercise-header">
                 <h4>${ex.name}</h4>
@@ -1332,7 +1561,7 @@ function renderWorkout() {
         `;
         exerciseList.appendChild(card);
     });
-    
+
     bindWorkoutEvents();
     renderOverloadTips();
 }
@@ -1397,25 +1626,25 @@ async function renderOverloadTips() {
         container.innerHTML = `<div class="empty-state-sm">Egzersiz eklediğinizde hedefleriniz burada görünecektir.</div>`;
         return;
     }
-    
+
     container.innerHTML = `<div class="empty-state-sm"><i class="fa-solid fa-spinner fa-spin"></i> Geçmiş veriler analiz ediliyor...</div>`;
-    
+
     try {
         const listRes = await fetch(apiURL("/api/logs/list"));
         if (!listRes.ok) throw new Error();
         const files = await listRes.json();
-        
+
         const pastDates = files
             .filter(f => f < state.currentDate)
             .sort((a, b) => new Date(b) - new Date(a));
-            
+
         const workoutExercises = state.dailyLog.workout.exercises;
         const historyMap = {};
-        
+
         for (const date of pastDates) {
             const foundAll = workoutExercises.every(ex => historyMap[ex.name]);
             if (foundAll) break;
-            
+
             const logRes = await fetch(apiURL(`/api/logs?date=${date}`));
             if (logRes.ok) {
                 const log = await logRes.json();
@@ -1434,19 +1663,19 @@ async function renderOverloadTips() {
                 }
             }
         }
-        
+
         container.innerHTML = "";
-        
+
         workoutExercises.forEach(ex => {
             const tipEl = document.createElement("div");
             tipEl.className = "overload-tip-item fade-in";
-            
+
             const prev = historyMap[ex.name];
             if (prev) {
                 let targetWeight = prev.weight;
                 let targetReps = prev.reps;
                 let reason = "";
-                
+
                 if (prev.rir >= 2) {
                     targetWeight = prev.weight + 2.5;
                     reason = `Son antrenmanda tükenişe çok mesafe vardı (RIR ${prev.rir}). Ağırlığı +2.5kg arttır.`;
@@ -1456,7 +1685,7 @@ async function renderOverloadTips() {
                 } else {
                     reason = "Son antrenmanda tam tükenişe ulaştın (RIR 0). Aynı ağırlık ve tekrarı korumaya çalış, form kalitesine odaklan.";
                 }
-                
+
                 tipEl.innerHTML = `
                     <div class="title">${ex.name}</div>
                     <div class="tip">
@@ -1476,7 +1705,7 @@ async function renderOverloadTips() {
             }
             container.appendChild(tipEl);
         });
-        
+
     } catch (err) {
         container.innerHTML = `<div class="empty-state-sm">Geçmiş yüklenirken hata oluştu.</div>`;
     }
@@ -1485,28 +1714,28 @@ async function renderOverloadTips() {
 function initWorkoutCritique() {
     const btn = document.getElementById("btn-ai-analyze-workout-prog");
     if (!btn) return;
-    
+
     btn.addEventListener("click", async () => {
         const apiKey = state.profile ? state.profile.apiKey : "";
         if (!apiKey) {
             alert("API Anahtarınız bulunamadı. Lütfen Ayarlar sekmesinden Gemini API anahtarınızı girin.");
             return;
         }
-        
+
         if (!state.dailyLog || !state.dailyLog.workout || state.dailyLog.workout.exercises.length === 0) {
             alert("Lütfen önce antrenman programınıza egzersiz ekleyin.");
             return;
         }
-        
+
         const critiqueDiv = document.getElementById("ai-workout-critique-content");
         critiqueDiv.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> AI Koç programını inceliyor...`;
-        
+
         try {
             const exercisesStr = state.dailyLog.workout.exercises.map(ex => {
                 const setsStr = ex.sets.map(s => `${s.kg}kg x ${s.reps} (RIR ${s.rir !== undefined ? s.rir : 2})`).join(", ");
                 return `- ${ex.name} : [${setsStr}]`;
             }).join("\n");
-            
+
             const prompt = `Antrenman analizi yap. Kısa tut.
 Kullanıcı: ${state.profile.name} | Hedef: ${state.profile.targetWeight > state.profile.weight ? 'Hacim' : 'Yakım'} | Ton: ${state.profile.tone || 'brom'}
 
@@ -1527,7 +1756,7 @@ Maksimum 6-7 cümle. Türkçe.
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
             });
-            
+
             if (response.ok) {
                 const result = await response.json();
                 const text = result.candidates[0].content.parts[0].text;
@@ -1535,7 +1764,7 @@ Maksimum 6-7 cümle. Türkçe.
             } else {
                 critiqueDiv.innerHTML = "Gemini API yanıt vermedi. Lütfen internetinizi ve anahtarınızı kontrol edin.";
             }
-            
+
         } catch (e) {
             critiqueDiv.innerHTML = "Hata oluştu: " + e.message;
         }
@@ -1611,7 +1840,7 @@ function initExerciseModal() {
     const closeBtn = document.getElementById("btn-close-exercise-modal");
     const saveBtn = document.getElementById("btn-save-exercise-modal");
     const input = document.getElementById("exercise-name-input");
-    
+
     openBtn.addEventListener("click", () => {
         input.value = "";
         modal.classList.remove("hidden");
@@ -1637,7 +1866,7 @@ document.getElementById("btn-ai-generate-workout").addEventListener("click", asy
         alert("API Anahtarı bulunamadı. Lütfen Ayarlar sekmesinden Gemini API anahtarınızı girin.");
         return;
     }
-    
+
     const goal = prompt("Antrenman amacını belirt (Örn: '3 günlük ev antrenmanı dambılla', 'Güç odaklı 4 günlük Upper/Lower', 'Göğüs ve Biceps odaklı hacim antrenmanı')");
     if (!goal) return;
 
@@ -1683,13 +1912,13 @@ Kurallar:
             const result = await response.json();
             const text = result.candidates[0].content.parts[0].text;
             const workout = parseGeminiJSON(text);
-            
+
             state.dailyLog.workout = {
                 name: workout.name || "AI Özel Antrenman",
                 completed: false,
                 exercises: workout.exercises
             };
-            
+
             renderWorkout();
             await saveDailyLog();
             alert("AI Koç antrenman programını başarıyla yazdı ve kaydetti!");
@@ -1726,7 +1955,7 @@ document.getElementById("ai-food-image-input").addEventListener("change", async 
         const reader = new FileReader();
         reader.onload = async (event) => {
             const base64Data = event.target.result.split(',')[1];
-            
+
             const prompt = `
 Görseldeki yemeği analiz et. İnternet verilerine dayanarak kalori ve makro değerlerini (gram cinsinden protein, karbonhidrat, yağ) hesapla.
 Bize sadece aşağıdaki formatta bir JSON dizisi (Array) döndür. Başka hiçbir metin ekleme:
@@ -1757,7 +1986,7 @@ Bize sadece aşağıdaki formatta bir JSON dizisi (Array) döndür. Başka hiçb
                 const result = await response.json();
                 const text = result.candidates[0].content.parts[0].text;
                 const items = parseGeminiJSON(text);
-                
+
                 if (!state.dailyLog.meals) state.dailyLog.meals = [];
                 for (const item of items) {
                     const kcal = parseInt(item.calories) || 0;
@@ -1844,9 +2073,9 @@ Bize sadece aşağıdaki formatta bir JSON dizisi (Array) döndür. Ekstra hiçb
             const result = await response.json();
             const text = result.candidates[0].content.parts[0].text;
             const items = parseGeminiJSON(text);
-            
+
             if (!state.dailyLog.meals) state.dailyLog.meals = [];
-            
+
             for (const item of items) {
                 state.dailyLog.meals.push({
                     name: item.name,
@@ -1855,13 +2084,13 @@ Bize sadece aşağıdaki formatta bir JSON dizisi (Array) döndür. Ekstra hiçb
                     carbs: parseInt(item.carbs) || 0,
                     fat: parseInt(item.fat) || 0
                 });
-                
+
                 state.dailyLog.nutrition.calories += parseInt(item.calories) || 0;
                 state.dailyLog.nutrition.protein += parseInt(item.protein) || 0;
                 state.dailyLog.nutrition.carbs += parseInt(item.carbs) || 0;
                 state.dailyLog.nutrition.fat += parseInt(item.fat) || 0;
             }
-            
+
             input.value = "";
             await saveDailyLog();
             renderDashboard();
@@ -1891,7 +2120,7 @@ function initNutritionForm() {
             addMeal("Hızlı Ekleme", kcal, p, c, f);
         });
     });
-    
+
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         const name = document.getElementById("meal-name").value;
@@ -1921,7 +2150,7 @@ function renderNutrition() {
     const list = document.getElementById("meals-list");
     list.innerHTML = "";
     const meals = state.dailyLog.meals || [];
-    
+
     if (meals.length === 0) {
         list.innerHTML = `<tr><td colspan="6" class="text-center">Bugün henüz öğün girilmedi.</td></tr>`;
     } else {
@@ -1944,7 +2173,7 @@ function renderNutrition() {
             `;
             list.appendChild(tr);
         });
-        
+
         document.querySelectorAll(".btn-delete-meal").forEach(btn => {
             btn.addEventListener("click", async (e) => {
                 const idx = parseInt(e.target.closest(".btn-delete-meal").getAttribute("data-idx"));
@@ -1996,7 +2225,7 @@ function initRecoveryForm() {
     const form = document.getElementById("recovery-form");
     const sleepInput = document.getElementById("rec-sleep");
     const sleepDisplay = document.getElementById("rec-sleep-val-display");
-    
+
     sleepInput.addEventListener("input", (e) => {
         sleepDisplay.textContent = `${parseFloat(e.target.value).toFixed(1)} Saat`;
     });
@@ -2025,7 +2254,7 @@ function initRecoveryForm() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         state.dailyLog.recovery.sleep_hours = parseFloat(sleepInput.value);
-        
+
         const activeDoms = [];
         document.querySelectorAll(".doms-btn.active").forEach(btn => {
             activeDoms.push(btn.getAttribute("data-muscle"));
@@ -2049,10 +2278,10 @@ function initDomsSelector() {
 function renderRecovery() {
     if (!state.dailyLog) return;
     const rec = state.dailyLog.recovery;
-    
+
     document.getElementById("rec-sleep").value = rec.sleep_hours || 8;
     document.getElementById("rec-sleep-val-display").textContent = `${(rec.sleep_hours || 8).toFixed(1)} Saat`;
-    
+
     // Set active button for wake feeling
     const wakeVal = rec.wake_feeling || 3;
     const wakeFeelingSelector = document.getElementById("wake-feeling-selector");
@@ -2060,7 +2289,7 @@ function renderRecovery() {
         btn.classList.remove("active");
         if (parseInt(btn.getAttribute("data-val")) === wakeVal) btn.classList.add("active");
     });
-    
+
     // Set active button for focus
     const focusVal = rec.focus_feeling || 3;
     const focusFeelingSelector = document.getElementById("focus-feeling-selector");
@@ -2068,7 +2297,7 @@ function renderRecovery() {
         btn.classList.remove("active");
         if (parseInt(btn.getAttribute("data-val")) === focusVal) btn.classList.add("active");
     });
-    
+
     // DOMS
     document.querySelectorAll(".doms-btn").forEach(btn => {
         btn.classList.remove("active");
@@ -2084,21 +2313,21 @@ function initRoutineControls() {
     const modal = document.getElementById("routine-modal");
     const closeBtn = document.getElementById("btn-close-routine-modal");
     const saveBtn = document.getElementById("btn-save-routine-modal");
-    
+
     addBtn.addEventListener("click", () => {
         document.getElementById("routine-time-input").value = "";
         document.getElementById("routine-title-input").value = "";
         modal.classList.remove("hidden");
     });
     closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
-    
+
     saveBtn.addEventListener("click", async () => {
         const time = document.getElementById("routine-time-input").value.trim();
         const title = document.getElementById("routine-title-input").value.trim();
         if (time && title) {
             state.dailyLog.routine.push({ time, title, completed: false });
             // Saate göre sırala
-            state.dailyLog.routine.sort((a,b) => a.time.localeCompare(b.time));
+            state.dailyLog.routine.sort((a, b) => a.time.localeCompare(b.time));
             await saveDailyLog();
             renderRoutine();
             modal.classList.add("hidden");
@@ -2169,8 +2398,8 @@ Lütfen tamamen aşağıdaki formatta bir JSON dizisi (Array) döndür. Başka y
                 const result = await response.json();
                 const text = result.candidates[0].content.parts[0].text;
                 const items = parseGeminiJSON(text);
-                
-                state.dailyLog.routine = items.sort((a,b) => a.time.localeCompare(b.time));
+
+                state.dailyLog.routine = items.sort((a, b) => a.time.localeCompare(b.time));
                 await saveDailyLog();
                 renderRoutine();
                 promptInput.value = "";
@@ -2193,16 +2422,16 @@ Lütfen tamamen aşağıdaki formatta bir JSON dizisi (Array) döndür. Başka y
 function renderRoutine() {
     const list = document.getElementById("routine-timeline-list");
     const emptyState = document.getElementById("routine-empty-state");
-    
+
     if (!state.dailyLog || !state.dailyLog.routine || state.dailyLog.routine.length === 0) {
         emptyState.classList.remove("hidden");
         list.innerHTML = "";
         return;
     }
-    
+
     emptyState.classList.add("hidden");
     list.innerHTML = "";
-    
+
     state.dailyLog.routine.forEach((item, idx) => {
         const itemEl = document.createElement("div");
         itemEl.className = `routine-item ${item.completed ? 'completed' : ''} fade-in`;
@@ -2248,16 +2477,16 @@ function initSettingsForm() {
     const form = document.getElementById("settings-form");
     const toggleKey = document.getElementById("btn-toggle-key-visibility");
     const apiKeyInput = document.getElementById("setting-api-key");
-    
+
     toggleKey.addEventListener("click", () => {
         const type = apiKeyInput.type === "password" ? "text" : "password";
         apiKeyInput.type = type;
         toggleKey.innerHTML = type === "password" ? '<i class="fa-solid fa-eye"></i>' : '<i class="fa-solid fa-eye-slash"></i>';
     });
-    
+
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
-        
+
         state.profile.name = document.getElementById("set-name").value;
         state.profile.gender = document.getElementById("set-gender").value;
         state.profile.tone = document.getElementById("set-tone").value;
@@ -2267,13 +2496,13 @@ function initSettingsForm() {
         state.profile.activity = document.getElementById("set-activity").value;
         state.profile.goalPace = document.getElementById("set-goal-pace").value;
         state.profile.apiKey = apiKeyInput.value.trim();
-        
+
         state.profile.city = document.getElementById("set-city").value || "Istanbul";
         state.profile.sleepTime = document.getElementById("set-sleep-time").value || "23:00";
         state.profile.privacy = document.getElementById("set-privacy").value || "public";
-        
+
         state.profile.targets = calculateNutritionTargets(state.profile);
-        
+
         try {
             const response = await fetch(apiURL("/api/profile"), {
                 method: "POST",
@@ -2293,10 +2522,10 @@ function initSettingsForm() {
 
 // 14. AI Chat Controls & System Context Tones
 function initChatControls() {
-    const sendBtn  = document.getElementById("btn-send-message");
+    const sendBtn = document.getElementById("btn-send-message");
     const chatInput = document.getElementById("chat-input");
     const reportBtn = document.getElementById("btn-generate-report");
-    const clearBtn  = document.getElementById("btn-clear-chat");
+    const clearBtn = document.getElementById("btn-clear-chat");
 
     sendBtn.addEventListener("click", handleUserMessage);
     chatInput.addEventListener("keydown", (e) => {
@@ -2354,7 +2583,7 @@ function appendMessage(sender, text, saveToDb = true) {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ sender, message: text, date: state.currentDate })
-        }).catch(() => {});
+        }).catch(() => { });
     }
 }
 
@@ -2384,7 +2613,7 @@ async function getAICoachResponse(prompt) {
     try {
         const tone = state.profile.tone || "brom";
         let tonePrompt = "";
-        
+
         if (tone === "brom") {
             tonePrompt = `
 Kullanıcı samimi erkek hitap tarzı 'Brom / Kral' seçti. Hitap ederken kesinlikle 'brom', 'kral', 'kardeşim', 'kralım', 'şampiyon', 'dostum' kelimelerini kullan. Bir spor salonu abisi/koçu gibi samimi, motive edici, hafif espri yapan ama disiplini elden bırakmayan enerjik bir tarzda konuş.
@@ -2403,8 +2632,8 @@ Kullanıcı profesyonel/resmi koçluk tarzı seçti. Profesyonel, ciddi, tamamen
         const focusFeelingTexts = ["Dağınık", "Yorgun", "Normal", "Odaklı"];
 
         const toneMap = {
-            brom:   "Samimi, kısa, brom/kral hitapı.",
-            champ:  "Samimi, sıcak, şampiyon/kralıçe hitapı.",
+            brom: "Samimi, kısa, brom/kral hitapı.",
+            champ: "Samimi, sıcak, şampiyon/kralıçe hitapı.",
             formal: "Profesyonel, kibar, kısa."
         };
         const toneInstr = toneMap[tone] || toneMap.formal;
@@ -2486,7 +2715,7 @@ Tarih: ${dayStr}
 - Uyku: ${log.recovery.sleep_hours} saat, Uyanış: ${log.recovery.wake_feeling || 3}/4, Odak: ${log.recovery.focus_feeling || 3}/4
 `;
                 }
-            } catch(e) { /* Boş gün */ }
+            } catch (e) { /* Boş gün */ }
         }
 
 
@@ -2575,16 +2804,16 @@ function initWorkoutSession() {
                 alert("Lütfen önce antrenman programınıza egzersiz ekleyin kral!");
                 return;
             }
-            
+
             sessionState.workout = JSON.parse(JSON.stringify(state.dailyLog.workout));
             sessionState.active = true;
             sessionState.exIdx = 0;
             sessionState.setIdx = 0;
-            
+
             document.getElementById("workout-session-overlay").classList.remove("hidden");
             document.getElementById("session-input-panel").classList.remove("hidden");
             document.getElementById("session-timer-panel").classList.add("hidden");
-            
+
             stopSessionTimer();
             renderSessionStep();
         });
@@ -2655,7 +2884,7 @@ async function renderSessionStep() {
     document.getElementById("session-exercise-name").textContent = ex.name;
 
     document.getElementById("session-target-desc").innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Hedef hesaplanıyor...`;
-    
+
     // Set-specific target RIR determination
     let recommendedRIR = 2; // Default 2 RIR for Set 1
     let rirAdvice = "";
@@ -2675,7 +2904,7 @@ async function renderSessionStep() {
         if (listRes.ok) {
             const files = await listRes.json();
             const pastDates = files.filter(f => f < state.currentDate).sort((a, b) => new Date(b) - new Date(a));
-            
+
             let prevData = null;
             for (const date of pastDates) {
                 const logRes = await fetch(apiURL(`/api/logs?date=${date}`));
@@ -2697,7 +2926,7 @@ async function renderSessionStep() {
                 let targetWeight = prevKg;
                 let targetReps = prevData.reps;
                 let prevRir = prevData.rir !== undefined ? prevData.rir : 1;
-                
+
                 // RIR progression calculations based on set index
                 if (recommendedRIR === 2) {
                     // Set 1: target RIR 2
@@ -2718,7 +2947,7 @@ async function renderSessionStep() {
                     <strong>Bugünkü Set Hedefi:</strong> ${targetWeight} kg x ${targetReps} tekrar (RIR ${recommendedRIR})<br>
                     <span style="font-size:0.75rem; color:var(--text-secondary); display:block; margin-top:6px;">💡 ${rirAdvice}</span>
                 `;
-                
+
                 document.getElementById("session-kg-input").value = targetWeight;
                 document.getElementById("session-reps-input").value = targetReps;
             } else {
@@ -2737,7 +2966,7 @@ async function renderSessionStep() {
     const rpeInput = document.getElementById("session-rpe-input");
     rpeInput.dataset.recommended = recommendedRIR;
     rpeInput.value = recommendedRIR;
-    
+
     const rirTexts = {
         "0": "Tam Tükeniş (Tükenişe 0 Tekrar) 💥",
         "1": "Tükenişe 1 Tekrar Kala 🔥",
@@ -2767,7 +2996,7 @@ function saveSessionSetInput() {
 function startSessionTimer() {
     document.getElementById("session-input-panel").classList.add("hidden");
     document.getElementById("session-timer-panel").classList.remove("hidden");
-    
+
     const exName = sessionState.workout.exercises[sessionState.exIdx].name.toLowerCase();
     const isHeavy = exName.includes("squat") || exName.includes("bench") || exName.includes("deadlift") || exName.includes("press");
     sessionState.totalTime = isHeavy ? 90 : 60;
@@ -2784,7 +3013,7 @@ function startSessionTimer() {
     sessionState.timer = setInterval(() => {
         sessionState.timeLeft--;
         display.textContent = sessionState.timeLeft;
-        
+
         const pct = (sessionState.timeLeft / sessionState.totalTime) * 100;
         bar.style.width = `${pct}%`;
 
@@ -2819,7 +3048,7 @@ function advanceSessionStep() {
 
 function regressSessionStep() {
     stopSessionTimer();
-    
+
     if (sessionState.setIdx > 0) {
         sessionState.setIdx--;
     } else if (sessionState.exIdx > 0) {
@@ -2848,7 +3077,7 @@ async function finishWorkoutSession() {
     renderWorkout();
     renderInsights();
     addXP(50, "Antrenman Tamamlandı 🏋️‍♂️");
-    
+
     alert("Tebrikler kral! Antrenmanı başarıyla bitirdin ve tüm seti kaydettik. Muhteşem iş çıkardın! 💪🔥");
 }
 
@@ -2911,7 +3140,7 @@ async function initLoginSession() {
         initClockAndSleepTracker();
     } else {
         loginOverlay.classList.remove("hidden");
-        
+
         loginSubmitBtn.addEventListener("click", async () => {
             let chosenUser = userSelect.value;
             if (!chosenUser) {
@@ -2926,17 +3155,17 @@ async function initLoginSession() {
                 }
                 chosenUser = typed;
             }
-            
+
             localStorage.setItem("active_username", chosenUser);
             state.username = chosenUser;
             loginOverlay.classList.add("hidden");
-            
+
             // Eğer onboarding inputlarında ad alanı boşsa kullanıcı adını yazalım
             const obNameInput = document.getElementById("ob-name");
             if (obNameInput && !obNameInput.value) {
                 obNameInput.value = chosenUser;
             }
-            
+
             await checkProfile();
             initSocialTab();
             initClockAndSleepTracker();
@@ -2964,14 +3193,14 @@ function initSocialTab() {
 async function loadSocialLeaderboard() {
     const leaderboardBody = document.getElementById("social-leaderboard-body");
     if (!leaderboardBody) return;
-    
+
     leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Liderlik tablosu yükleniyor...</td></tr>`;
 
     try {
         const res = await fetch("/api/social/users");
         if (res.ok) {
             const users = await res.json();
-            
+
             users.forEach(u => {
                 u.prs = u.prs || {};
                 u.totalPR = (u.prs.squat || 0) + (u.prs.bench_press || 0) + (u.prs.deadlift || 0);
@@ -3089,7 +3318,7 @@ function initClockAndSleepTracker() {
 
 function updateCityTime() {
     if (!state.profile) return;
-    
+
     const now = new Date();
     const timeStr = now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
     const clockEl = document.getElementById("header-city-clock");
@@ -3120,10 +3349,10 @@ function updateCityTime() {
 
 async function triggerDayEnd(isAuto = false) {
     if (!state.dailyLog) return;
-    
+
     state.dailyLog.dayClosed = true;
     await saveDailyLog();
-    
+
     disableAllInputs();
     await showDailyReport(isAuto);
 }
@@ -3147,7 +3376,7 @@ function disableAllInputs() {
     document.querySelectorAll(".btn-quick, .btn-toggle-routine, .btn-delete-routine, .btn-delete-meal, .btn-use-favorite").forEach(btn => {
         btn.disabled = isClosed;
     });
-    
+
     document.querySelectorAll(".sets-table input").forEach(inp => {
         inp.disabled = isClosed;
     });
@@ -3179,7 +3408,7 @@ function disableAllInputs() {
                     <button class="btn btn-secondary btn-sm" id="btn-reopen-day"><i class="fa-solid fa-lock-open"></i> Kilidi Aç</button>
                 </div>
             `;
-            
+
             const dashboardSection = document.getElementById("tab-dashboard");
             if (dashboardSection) {
                 dashboardSection.insertBefore(closedNotice, dashboardSection.firstChild);
@@ -3335,7 +3564,7 @@ function initPWAInstall() {
                     shareLinkInput.value = info.download_url;
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     installBtn?.addEventListener("click", openDownloadModal);
@@ -3392,6 +3621,40 @@ function initPWAInstall() {
         });
     });
 
+    androidGuideBtn?.addEventListener("click", async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+            return;
+        }
+        alert("Android Ana Ekrana Kurulum:\n1. 'Android Uygulamasını İndir' butonuna tıklayarak taşınabilir uygulamayı cihazınıza indirin VEYA\n2. Chrome tarayıcınızın sağ üst köşesindeki (⋮) menüsünden 'Uygulamayı Yükle / Ana ekrana ekle' seçeneğine dokunun.");
+    });
+
+    copyLinkBtn?.addEventListener("click", () => {
+        if (!shareLinkInput) return;
+        navigator.clipboard?.writeText(shareLinkInput.value);
+        showToast("🔗 İndirme linki panoya kopyalandı!");
+    });
+
+    // When running in standalone mode (file://), package and download the current document directly
+    document.querySelectorAll(".btn-dl-action").forEach(link => {
+        link.addEventListener("click", (e) => {
+            if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
+                e.preventDefault();
+                const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+                const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+                const a = document.createElement("a");
+                a.href = URL.createObjectURL(blob);
+                a.download = link.getAttribute("download") || "AICoaching_Portable_App.html";
+                a.click();
+                showToast("📥 Uygulama dosyası indirildi!");
+            } else {
+                showToast("📥 İndirme başlatıldı!");
+            }
+        });
+    });
+
     window.addEventListener("appinstalled", () => {
         showToast("🎉 Uygulama cihazınıza başarıyla kuruldu!");
         nativeBanner?.classList.add("hidden");
@@ -3403,56 +3666,56 @@ async function checkAndGeneratePWAIcons() {
     if (localStorage.getItem("pwa_icons_generated_v3")) {
         return;
     }
-    
+
     console.log("Generating PWA icons client-side...");
-    
+
     function drawDumbbellOnCanvas(canvas, size) {
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, size, size);
-        
+
         const scale = size / 512.0;
         const c_x = 256 * scale;
         const c_y = 256 * scale;
         const r = 230 * scale;
-        
+
         // Background Orange
         ctx.beginPath();
         ctx.arc(c_x, c_y, r, 0, 2 * Math.PI);
         ctx.fillStyle = "#f97316";
         ctx.fill();
-        
+
         // Inner white circular border
         ctx.beginPath();
         ctx.arc(c_x, c_y, 205 * scale, 0, 2 * Math.PI);
         ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
         ctx.lineWidth = Math.max(1, 6 * scale);
         ctx.stroke();
-        
+
         // Dumbbell Bar
         const bar_w = 260 * scale;
         const bar_h = 32 * scale;
         ctx.fillStyle = "#ffffff";
-        ctx.fillRect(c_x - bar_w/2, c_y - bar_h/2, bar_w, bar_h);
-        
+        ctx.fillRect(c_x - bar_w / 2, c_y - bar_h / 2, bar_w, bar_h);
+
         // Inner Plates
         const ip_w = 24 * scale;
         const ip_h = 160 * scale;
-        ctx.fillRect(c_x - bar_w/2 - ip_w, c_y - ip_h/2, ip_w, ip_h);
-        ctx.fillRect(c_x + bar_w/2, c_y - ip_h/2, ip_w, ip_h);
-        
+        ctx.fillRect(c_x - bar_w / 2 - ip_w, c_y - ip_h / 2, ip_w, ip_h);
+        ctx.fillRect(c_x + bar_w / 2, c_y - ip_h / 2, ip_w, ip_h);
+
         // Outer Plates
         const op_w = 32 * scale;
         const op_h = 220 * scale;
-        ctx.fillRect(c_x - bar_w/2 - ip_w - 12*scale - op_w, c_y - op_h/2, op_w, op_h);
-        ctx.fillRect(c_x + bar_w/2 + ip_w + 12*scale, c_y - op_h/2, op_w, op_h);
-        
+        ctx.fillRect(c_x - bar_w / 2 - ip_w - 12 * scale - op_w, c_y - op_h / 2, op_w, op_h);
+        ctx.fillRect(c_x + bar_w / 2 + ip_w + 12 * scale, c_y - op_h / 2, op_w, op_h);
+
         // Grips
         const grip_w = 120 * scale;
         const grip_h = 42 * scale;
         ctx.fillStyle = "#f1f5f9";
-        ctx.fillRect(c_x - grip_w/2, c_y - grip_h/2, grip_w, grip_h);
+        ctx.fillRect(c_x - grip_w / 2, c_y - grip_h / 2, grip_w, grip_h);
     }
-    
+
     try {
         const sizes = [192, 512];
         for (const size of sizes) {
@@ -3460,9 +3723,9 @@ async function checkAndGeneratePWAIcons() {
             canvas.width = size;
             canvas.height = size;
             drawDumbbellOnCanvas(canvas, size);
-            
+
             const dataUrl = canvas.toDataURL("image/png");
-            
+
             // Post to save icon route
             await fetch(`/api/save-icon?size=${size}`, {
                 method: "POST",
@@ -3545,11 +3808,11 @@ async function initMealFavorites() {
 
         const useFavBtn = e.target.closest(".btn-use-favorite");
         if (useFavBtn) {
-            const name    = useFavBtn.getAttribute("data-name");
-            const kcal    = parseInt(useFavBtn.getAttribute("data-kcal"));
+            const name = useFavBtn.getAttribute("data-name");
+            const kcal = parseInt(useFavBtn.getAttribute("data-kcal"));
             const protein = parseInt(useFavBtn.getAttribute("data-protein"));
-            const carbs   = parseInt(useFavBtn.getAttribute("data-carbs"));
-            const fat     = parseInt(useFavBtn.getAttribute("data-fat"));
+            const carbs = parseInt(useFavBtn.getAttribute("data-carbs"));
+            const fat = parseInt(useFavBtn.getAttribute("data-fat"));
             await addMeal(name, kcal, protein, carbs, fat);
             showToast(`✅ ${name} eklendi!`);
         }
@@ -3577,9 +3840,9 @@ async function initMealFavorites() {
                 data.meals.forEach(m => {
                     state.dailyLog.meals.push(m);
                     state.dailyLog.nutrition.calories += m.calories || 0;
-                    state.dailyLog.nutrition.protein  += m.protein  || 0;
-                    state.dailyLog.nutrition.carbs    += m.carbs    || 0;
-                    state.dailyLog.nutrition.fat      += m.fat      || 0;
+                    state.dailyLog.nutrition.protein += m.protein || 0;
+                    state.dailyLog.nutrition.carbs += m.carbs || 0;
+                    state.dailyLog.nutrition.fat += m.fat || 0;
                 });
                 await saveDailyLog();
                 renderDashboard();

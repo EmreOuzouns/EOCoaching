@@ -97,12 +97,12 @@
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        Windows masaüstünde çerçevesiz uygulama penceresi olarak çalışan başlatıcıyı (<code>.bat</code>) veya kurulum gerektirmeyen taşınabilir tek dosya sürümünü indirin.
+                        Windows masaüstünde doğrudan çalışan gerçek masaüstü uygulamasını (<code>.exe</code>) veya çevrimdışı taşınabilir sürümü indirin.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a href="/api/download/windows" download="AICoaching_Windows_App.bat" class="btn btn-primary" style="text-decoration:none; background:#0ea5e9;">
-                        <i class="fa-solid fa-download"></i> Windows İçin İndir (.bat Başlatıcı)
+                    <a href="/api/download/windows" download="AICoaching_Windows.exe" class="btn btn-primary" style="text-decoration:none; background:#0ea5e9;">
+                        <i class="fa-solid fa-download"></i> Windows İçin İndir (.exe Uygulama)
                     </a>
                     <a href="/api/download/standalone" download="AICoaching_Windows_Portable.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
                         <i class="fa-solid fa-file-code"></i> Taşınabilir Sürümü İndir (Çevrimdışı Çalışır)
@@ -128,8 +128,8 @@
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a href="/api/download/android" download="AICoaching_Android_App.html" class="btn btn-primary" style="text-decoration:none; background:#10b981;">
-                        <i class="fa-solid fa-download"></i> Android İçin İndir
+                    <a href="/api/download/android" download="AICoaching_Android.zip" class="btn btn-primary" style="text-decoration:none; background:#10b981;">
+                        <i class="fa-solid fa-download"></i> Android İçin İndir (.zip Paket)
                     </a>
                     <button type="button" class="btn btn-secondary btn-sm" onclick="installPWAOrGuide('android')">
                         <i class="fa-solid fa-mobile-screen-button"></i> Ana Ekrana Uygulama Olarak Ekle
@@ -145,18 +145,18 @@
                             <i class="fa-brands fa-apple" style="font-size:2.2rem; color:#0f172a;"></i>
                             <div>
                                 <h3 style="font-family:var(--font-header); font-size:1.2rem;">iOS (iPhone & iPad)</h3>
-                                <span style="font-size:0.8rem; color:var(--text-secondary);">iOS 14+ WebClip & Taşınabilir App</span>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">iOS 14+ Uygulama Paketi</span>
                             </div>
                         </div>
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        iOS Ana Ekran uygulama profilini (<code>.mobileconfig</code>) veya çevrimdışı çalışan iOS uygulama paketini indirin. Safari'de <strong>Paylaş &rarr; Ana Ekrana Ekle</strong> ile de kurabilirsiniz.
+                        iOS Ana Ekran uygulama profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi (<code>.zip</code>) indirin.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a href="/api/download/ios" download="AICoaching_iOS.mobileconfig" class="btn btn-primary" style="text-decoration:none; background:#0f172a;">
-                        <i class="fa-solid fa-download"></i> iOS Uygulama Profilini İndir (.mobileconfig)
+                    <a href="/api/download/ios" download="AICoaching_iOS.zip" class="btn btn-primary" style="text-decoration:none; background:#0f172a;">
+                        <i class="fa-solid fa-download"></i> iOS İçin İndir (.zip Paket)
                     </a>
                     <a href="/api/download/standalone" download="AICoaching_iOS_App.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
                         <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama İndir (.html)
@@ -178,12 +178,12 @@
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        macOS üzerinde bağımsız pencere olarak başlatan <code>.command</code> paketini veya tek dosya taşınabilir Mac uygulamasını indirin.
+                        macOS üzerinde çalışan <code>AICoaching.app</code> uygulama paketini (<code>.zip</code>) veya tek dosya taşınabilir Mac uygulamasını indirin.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a href="/api/download/mac" download="AICoaching_Mac_App.command" class="btn btn-primary" style="text-decoration:none; background:#8b5cf6;">
-                        <i class="fa-solid fa-download"></i> Mac İçin İndir (.command)
+                    <a href="/api/download/mac" download="AICoaching_macOS.zip" class="btn btn-primary" style="text-decoration:none; background:#8b5cf6;">
+                        <i class="fa-solid fa-download"></i> Mac İçin İndir (.zip Paket)
                     </a>
                     <a href="/api/download/standalone" download="AICoaching_Mac_App.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
                         <i class="fa-solid fa-box-archive"></i> Mac Taşınabilir Uygulama İndir (.html)

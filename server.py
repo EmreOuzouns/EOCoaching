@@ -15,6 +15,8 @@ import builtins
 import mimetypes
 import socket
 import uuid
+import io
+import zipfile
 from datetime import datetime, date, timedelta
 from contextlib import contextmanager
 from urllib.parse import urlparse, parse_qs
@@ -752,6 +754,58 @@ def build_ios_mobileconfig(host_url: str) -> bytes:
     return profile_xml.encode("utf-8")
 
 
+def build_platform_package(platform: str, host_url: str) -> tuple:
+    """Returns (bytes_data, filename, content_type) for the requested platform."""
+    platform = platform.lower()
+    downloads_dir = os.path.join(BASE_DIR, "downloads")
+
+    if platform == "windows":
+        exe_path = os.path.join(downloads_dir, "AICoaching_Windows.exe")
+        if os.path.exists(exe_path):
+            with open(exe_path, "rb") as f:
+                return f.read(), "AICoaching_Windows.exe", "application/vnd.microsoft.portable-executable"
+        # Fallback to ZIP archive
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("AICoaching_App.html", build_standalone_html())
+        return buf.getvalue(), "AICoaching_Windows.zip", "application/zip"
+
+    elif platform == "mac":
+        zip_path = os.path.join(downloads_dir, "AICoaching_macOS.zip")
+        if os.path.exists(zip_path):
+            with open(zip_path, "rb") as f:
+                return f.read(), "AICoaching_macOS.zip", "application/zip"
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("AICoaching.app/Contents/MacOS/AICoaching", build_mac_launcher(host_url))
+            zf.writestr("AICoaching_Offline_App.html", build_standalone_html())
+        return buf.getvalue(), "AICoaching_macOS.zip", "application/zip"
+
+    elif platform == "ios":
+        zip_path = os.path.join(downloads_dir, "AICoaching_iOS.zip")
+        if os.path.exists(zip_path):
+            with open(zip_path, "rb") as f:
+                return f.read(), "AICoaching_iOS.zip", "application/zip"
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("AICoaching_iOS.mobileconfig", build_ios_mobileconfig(host_url))
+            zf.writestr("AICoaching_iOS_App.html", build_standalone_html())
+        return buf.getvalue(), "AICoaching_iOS.zip", "application/zip"
+
+    elif platform == "android":
+        zip_path = os.path.join(downloads_dir, "AICoaching_Android.zip")
+        if os.path.exists(zip_path):
+            with open(zip_path, "rb") as f:
+                return f.read(), "AICoaching_Android.zip", "application/zip"
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("AICoaching_Android_App.html", build_standalone_html())
+        return buf.getvalue(), "AICoaching_Android.zip", "application/zip"
+
+    else:
+        return build_standalone_html(), "AICoaching_Portable_App.html", "application/octet-stream"
+
+
 # ─────────────────────────────────────────────
 # FastAPI Mode (when available)
 # ─────────────────────────────────────────────
@@ -867,23 +921,12 @@ if USE_FASTAPI:
     def download_app(platform: str):
         ip = get_lan_ip()
         host_url = f"http://{ip}:{PORT}"
-        if platform == "windows":
-            data = build_windows_launcher(f"http://localhost:{PORT}")
-            return Response(content=data, media_type="application/octet-stream",
-                            headers={"Content-Disposition": 'attachment; filename="AICoaching_Windows_App.bat"'})
-        elif platform == "mac":
-            data = build_mac_launcher(host_url)
-            return Response(content=data, media_type="application/octet-stream",
-                            headers={"Content-Disposition": 'attachment; filename="AICoaching_Mac_App.command"'})
-        elif platform == "ios":
-            data = build_ios_mobileconfig(host_url)
-            return Response(content=data, media_type="application/x-apple-aspen-config",
-                            headers={"Content-Disposition": 'attachment; filename="AICoaching_iOS.mobileconfig"'})
-        else:
-            data = build_standalone_html()
-            fname = "AICoaching_Android_App.html" if platform == "android" else "AICoaching_Portable_App.html"
-            return Response(content=data, media_type="text/html; charset=utf-8",
-                            headers={"Content-Disposition": f'attachment; filename="{fname}"'})
+        data, fname, ctype = build_platform_package(platform, host_url)
+        return Response(
+            content=data,
+            media_type=ctype,
+            headers={"Content-Disposition": f'attachment; filename="{fname}"'}
+        )
 
     app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
@@ -1004,16 +1047,8 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 platform = path.split("/api/download/")[1].split("/")[0].lower()
                 ip = get_lan_ip()
                 host_url = f"http://{ip}:{PORT}"
-                if platform == "windows":
-                    return self._send_download(build_windows_launcher(f"http://localhost:{PORT}"), "AICoaching_Windows_App.bat")
-                elif platform == "mac":
-                    return self._send_download(build_mac_launcher(host_url), "AICoaching_Mac_App.command")
-                elif platform == "ios":
-                    return self._send_download(build_ios_mobileconfig(host_url), "AICoaching_iOS.mobileconfig", "application/x-apple-aspen-config")
-                elif platform == "android":
-                    return self._send_download(build_standalone_html(), "AICoaching_Android_App.html", "text/html; charset=utf-8")
-                else:
-                    return self._send_download(build_standalone_html(), "AICoaching_Portable_App.html", "text/html; charset=utf-8")
+                data, fname, ctype = build_platform_package(platform, host_url)
+                return self._send_download(data, fname, ctype)
 
             else:
                 return self._send_json({"detail": "Not found"}, 404)

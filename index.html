@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EmreOuzoun AI Coach</title>
-    
+
     <!-- PWA & Mobile Meta Tags -->
     <meta name="theme-color" content="#f97316">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,63 +13,74 @@
     <meta name="apple-mobile-web-app-title" content="EO Coach">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <link rel="manifest" href="manifest.json">
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="app-container">
-        
+
         <!-- Login / User Selection Overlay -->
         <div id="login-overlay" class="overlay">
             <div class="glass-card onboarding-card fade-in" style="max-width: 420px; width: 100%;">
-                <h2 style="text-align: center;"><i class="fa-solid fa-dumbbell text-neon-orange"></i> EmreOuzoun AI Coach</h2>
+                <h2 style="text-align: center;"><i class="fa-solid fa-dumbbell text-neon-orange"></i> EmreOuzoun AI
+                    Coach</h2>
                 <p class="subtitle text-center">Giriş yapın, profil seçin veya yeni bir kullanıcı oluşturun.</p>
-                
+
                 <div class="form-group mt-20">
                     <label for="login-user-select">Kayıtlı Profil Seçin</label>
                     <select id="login-user-select" style="width:100%;">
                         <option value="">-- Yeni Kullanıcı Oluştur --</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group mt-15" id="login-username-group">
                     <label for="login-username-input">Yeni Kullanıcı Adı</label>
                     <input type="text" id="login-username-input" placeholder="Örn: emre" style="width:100%;">
-                    <p class="subtitle" style="font-size:0.7rem; margin-top:4px;">Sadece harf, rakam ve alt çizgi (_) kullanın.</p>
+                    <p class="subtitle" style="font-size:0.7rem; margin-top:4px;">Sadece harf, rakam ve alt çizgi (_)
+                        kullanın.</p>
                 </div>
-                
-                <button class="btn btn-primary btn-glow w-100 mt-20" id="btn-login-submit">Giriş Yap / Devam Et <i class="fa-solid fa-chevron-right"></i></button>
-                <button type="button" class="btn btn-secondary w-100 mt-10" id="btn-login-download-app" style="border-color: rgba(249,115,22,0.3); color: var(--neon-orange);">
+
+                <button class="btn btn-primary btn-glow w-100 mt-20" id="btn-login-submit">Giriş Yap / Devam Et <i
+                        class="fa-solid fa-chevron-right"></i></button>
+                <button type="button" class="btn btn-secondary w-100 mt-10" id="btn-login-download-app"
+                    style="border-color: rgba(249,115,22,0.3); color: var(--neon-orange);">
                     <i class="fa-solid fa-download"></i> Uygulamayı İndir (Win / Android / iOS / Mac)
                 </button>
             </div>
         </div>
-        
+
         <!-- Onboarding Screen -->
         <div id="onboarding-overlay" class="overlay hidden">
             <div class="glass-card onboarding-card quiz-card fade-in" style="max-width: 580px; width: 100%;">
                 <h2><i class="fa-solid fa-dumbbell text-neon-orange"></i> EmreOuzoun AI Coach</h2>
                 <p class="subtitle">Hedeflerinizi belirleyelim ve programınızı hazırlayalım.</p>
-                
+
                 <form id="onboarding-form">
                     <!-- Quiz Progress Bar -->
                     <div class="quiz-progress-container" style="margin-bottom: 20px;">
-                        <div class="quiz-progress-bar-bg" style="width: 100%; height: 6px; background: rgba(15, 23, 42, 0.05); border-radius: 3px; overflow: hidden;">
-                            <div id="quiz-progress-fill" style="width: 16.6%; height: 100%; background: var(--neon-orange); border-radius: 3px; transition: width 0.3s ease;"></div>
+                        <div class="quiz-progress-bar-bg"
+                            style="width: 100%; height: 6px; background: rgba(15, 23, 42, 0.05); border-radius: 3px; overflow: hidden;">
+                            <div id="quiz-progress-fill"
+                                style="width: 16.6%; height: 100%; background: var(--neon-orange); border-radius: 3px; transition: width 0.3s ease;">
+                            </div>
                         </div>
-                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
+                        <div
+                            style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">
                             <span id="quiz-step-text">Aşama 1 / 6</span>
                             <span id="quiz-step-desc">Profil Bilgileri</span>
                         </div>
@@ -89,7 +101,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="ob-age">Yaşınız</label>
@@ -100,7 +112,7 @@
                                 <input type="number" id="ob-height" required min="100" max="250" value="180">
                             </div>
                         </div>
-                        
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="ob-weight">Güncel Kilo (kg)</label>
@@ -108,7 +120,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="ob-target-weight">Hedef Kilo (kg)</label>
-                                <input type="number" id="ob-target-weight" step="0.1" required min="30" max="250" value="75">
+                                <input type="number" id="ob-target-weight" step="0.1" required min="30" max="250"
+                                    value="75">
                             </div>
                         </div>
 
@@ -122,7 +135,7 @@
                                 <input type="time" id="ob-sleep-time" value="23:00" required>
                             </div>
                         </div>
-                        
+
                         <div class="form-group" style="margin-bottom:15px;">
                             <label for="ob-privacy">Profil Gizliliği</label>
                             <select id="ob-privacy">
@@ -134,8 +147,10 @@
 
                     <!-- Step 2: Hedef Tanımı -->
                     <div class="quiz-step hidden" data-step="2">
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Ana Hedefiniz Nedir?</h4>
-                        <p class="subtitle" style="margin-bottom: 16px;">AI Koçunuzun programı ve hedeflerini şekillendirmesi için en uygun olanı seçin.</p>
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Ana Hedefiniz
+                            Nedir?</h4>
+                        <p class="subtitle" style="margin-bottom: 16px;">AI Koçunuzun programı ve hedeflerini
+                            şekillendirmesi için en uygun olanı seçin.</p>
                         <div class="quiz-options-grid">
                             <div class="option-card active" data-value="hypertrophy" data-input="ob-fitness-goal">
                                 <div class="icon"><i class="fa-solid fa-dumbbell text-neon-orange"></i></div>
@@ -150,7 +165,8 @@
                             <div class="option-card" data-value="strength" data-input="ob-fitness-goal">
                                 <div class="icon"><i class="fa-solid fa-gauge-high text-neon-purple"></i></div>
                                 <div class="title">Güçlenmek (Powerlifting)</div>
-                                <div class="desc">Squat, Bench Press, Deadlift gibi kaldırışları en üst seviyeye taşımak.</div>
+                                <div class="desc">Squat, Bench Press, Deadlift gibi kaldırışları en üst seviyeye
+                                    taşımak.</div>
                             </div>
                             <div class="option-card" data-value="health" data-input="ob-fitness-goal">
                                 <div class="icon"><i class="fa-solid fa-heart-pulse text-neon-green"></i></div>
@@ -163,7 +179,8 @@
 
                     <!-- Step 3: Spor Seviyesi & Antrenman Sıklığı -->
                     <div class="quiz-step hidden" data-step="3">
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Spor Seviyeniz</h4>
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Spor Seviyeniz
+                        </h4>
                         <div class="quiz-options-grid" style="margin-bottom: 20px;">
                             <div class="option-card" data-value="beginner" data-input="ob-fitness-level">
                                 <div class="icon"><i class="fa-solid fa-seedling text-neon-green"></i></div>
@@ -178,7 +195,8 @@
                             <div class="option-card" data-value="advanced" data-input="ob-fitness-level">
                                 <div class="icon"><i class="fa-solid fa-crown text-neon-purple"></i></div>
                                 <div class="title">İleri Seviye</div>
-                                <div class="desc">2+ yıl tecrübe. Detaylı plato kırma yöntemleri ve yüksek yoğunluk.</div>
+                                <div class="desc">2+ yıl tecrübe. Detaylı plato kırma yöntemleri ve yüksek yoğunluk.
+                                </div>
                             </div>
                         </div>
                         <input type="hidden" id="ob-fitness-level" value="intermediate">
@@ -198,7 +216,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div class="form-group">
                             <label for="ob-goal-pace">Kilo Değişim Hızı Hedefi (Haftalık)</label>
                             <select id="ob-goal-pace">
@@ -211,27 +229,32 @@
 
                     <!-- Step 4: Antrenman Mekanı & Süresi -->
                     <div class="quiz-step hidden" data-step="4">
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Antrenman Mekanınız</h4>
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Antrenman
+                            Mekanınız</h4>
                         <div class="quiz-options-grid" style="margin-bottom: 20px;">
                             <div class="option-card active" data-value="gym" data-input="ob-workout-location">
                                 <div class="icon"><i class="fa-solid fa-building-user text-neon-orange"></i></div>
                                 <div class="title">Spor Salonu</div>
-                                <div class="desc">Barbell, dambıl, kablo ve makinelerin olduğu tam donanımlı salon.</div>
+                                <div class="desc">Barbell, dambıl, kablo ve makinelerin olduğu tam donanımlı salon.
+                                </div>
                             </div>
                             <div class="option-card" data-value="home_dumbbell" data-input="ob-workout-location">
                                 <div class="icon"><i class="fa-solid fa-house text-neon-cyan"></i></div>
                                 <div class="title">Ev (Dambıl ile)</div>
-                                <div class="desc">Ev ortamında ayarlanabilir dambıllarla veya direnç bantlarıyla çalışma.</div>
+                                <div class="desc">Ev ortamında ayarlanabilir dambıllarla veya direnç bantlarıyla
+                                    çalışma.</div>
                             </div>
                             <div class="option-card" data-value="calisthenics" data-input="ob-workout-location">
                                 <div class="icon"><i class="fa-solid fa-person-running text-neon-green"></i></div>
                                 <div class="title">Calisthenics</div>
-                                <div class="desc">Vücut ağırlığıyla barfiks demiri, şınav barı vb. kullanarak çalışma.</div>
+                                <div class="desc">Vücut ağırlığıyla barfiks demiri, şınav barı vb. kullanarak çalışma.
+                                </div>
                             </div>
                         </div>
                         <input type="hidden" id="ob-workout-location" value="gym">
 
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Antrenman Süre Sınırınız</h4>
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Antrenman Süre
+                            Sınırınız</h4>
                         <div class="quiz-options-grid">
                             <div class="option-card" data-value="short" data-input="ob-daily-time-limit">
                                 <div class="icon"><i class="fa-solid fa-hourglass-start text-neon-orange"></i></div>
@@ -254,7 +277,8 @@
 
                     <!-- Step 5: Beslenme Alışkanlığı & API Key -->
                     <div class="quiz-step hidden" data-step="5">
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Beslenme Alışkanlığınız</h4>
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">Beslenme
+                            Alışkanlığınız</h4>
                         <div class="quiz-options-grid" style="margin-bottom: 20px;">
                             <div class="option-card active" data-value="anything" data-input="ob-diet-pref">
                                 <div class="icon"><i class="fa-solid fa-utensils text-neon-orange"></i></div>
@@ -281,26 +305,32 @@
 
                         <div class="form-group" style="margin-top: 15px;">
                             <label for="ob-api-key">Gemini API Key (Yapay Zeka Program Üretimi İçin)</label>
-                            <input type="password" id="ob-api-key" placeholder="AIzaSy... (Boş bırakırsanız standart hazır şablonlar kurulur)">
-                            <p class="subtitle" style="font-size:0.75rem; margin-top:4px;">Gemini API anahtarınız tarayıcınızda ve yerel sunucuda güvenle saklanır.</p>
+                            <input type="password" id="ob-api-key"
+                                placeholder="AIzaSy... (Boş bırakırsanız standart hazır şablonlar kurulur)">
+                            <p class="subtitle" style="font-size:0.75rem; margin-top:4px;">Gemini API anahtarınız
+                                tarayıcınızda ve yerel sunucuda güvenle saklanır.</p>
                         </div>
                     </div>
 
                     <!-- Step 6: AI Koç Rolü / Hitap Tarzı -->
                     <div class="quiz-step hidden" data-step="6">
-                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">AI Koç Hitap Tarzı</h4>
-                        <p class="subtitle" style="margin-bottom: 16px;">Koçunuzun sizinle iletişim kurarken kullanacağı üslubu seçin.</p>
-                        
+                        <h4 style="margin-bottom: 8px; font-family: var(--font-header); font-weight:700;">AI Koç Hitap
+                            Tarzı</h4>
+                        <p class="subtitle" style="margin-bottom: 16px;">Koçunuzun sizinle iletişim kurarken kullanacağı
+                            üslubu seçin.</p>
+
                         <div class="quiz-options-grid">
                             <div class="option-card active" data-value="brom" data-input="ob-tone">
                                 <div class="icon"><i class="fa-solid fa-crown text-neon-orange"></i></div>
                                 <div class="title">Samimi Brom & Kral</div>
-                                <div class="desc">"Kral naptın, bastın mı bugün Bench'i?" tadında samimi erkek koç üslubu.</div>
+                                <div class="desc">"Kral naptın, bastın mı bugün Bench'i?" tadında samimi erkek koç
+                                    üslubu.</div>
                             </div>
                             <div class="option-card" data-value="champ" data-input="ob-tone">
                                 <div class="icon"><i class="fa-solid fa-medal text-neon-cyan"></i></div>
                                 <div class="title">Samimi Şampiyon & Kraliçe</div>
-                                <div class="desc">"Harikasın şampiyon, bugünü mükemmel tamamladık!" tadında samimi koç üslubu.</div>
+                                <div class="desc">"Harikasın şampiyon, bugünü mükemmel tamamladık!" tadında samimi koç
+                                    üslubu.</div>
                             </div>
                             <div class="option-card" data-value="formal" data-input="ob-tone">
                                 <div class="icon"><i class="fa-solid fa-user-tie text-neon-purple"></i></div>
@@ -312,10 +342,14 @@
                     </div>
 
                     <!-- Quiz Navigation Buttons -->
-                    <div class="quiz-navigation mt-25" style="display: flex; justify-content: space-between; gap: 15px; margin-top:20px;">
-                        <button type="button" class="btn btn-secondary" id="btn-quiz-prev" style="visibility: hidden;"><i class="fa-solid fa-chevron-left"></i> Geri</button>
-                        <button type="button" class="btn btn-primary btn-glow" id="btn-quiz-next">İleri <i class="fa-solid fa-chevron-right"></i></button>
-                        <button type="submit" class="btn btn-success btn-glow hidden" id="btn-quiz-submit">Koçu Kur & Başlat <i class="fa-solid fa-circle-check"></i></button>
+                    <div class="quiz-navigation mt-25"
+                        style="display: flex; justify-content: space-between; gap: 15px; margin-top:20px;">
+                        <button type="button" class="btn btn-secondary" id="btn-quiz-prev"
+                            style="visibility: hidden;"><i class="fa-solid fa-chevron-left"></i> Geri</button>
+                        <button type="button" class="btn btn-primary btn-glow" id="btn-quiz-next">İleri <i
+                                class="fa-solid fa-chevron-right"></i></button>
+                        <button type="submit" class="btn btn-success btn-glow hidden" id="btn-quiz-submit">Koçu Kur &
+                            Başlat <i class="fa-solid fa-circle-check"></i></button>
                     </div>
                 </form>
             </div>
@@ -327,7 +361,7 @@
                 <i class="fa-solid fa-dumbbell text-neon-orange"></i>
                 <span>EMRE<span>OUZOUN</span></span>
             </div>
-            
+
             <nav class="nav-menu">
                 <a href="#" class="nav-link active" data-tab="dashboard">
                     <i class="fa-solid fa-chart-simple"></i> Dashboard
@@ -355,33 +389,39 @@
                 </a>
             </nav>
 
-            <!-- App Install / Download Center Button -->
-            <button id="pwa-install-btn" class="btn btn-primary btn-sm btn-glow" style="margin: 15px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <i class="fa-solid fa-download"></i> Uygulamayı İndir
-            </button>
- 
-            <div class="user-badge" id="sidebar-user-badge">
-                <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
-                <div class="details">
-                    <span class="name" id="user-display-name">Misafir</span>
-                    <span class="status" id="user-display-status">Yükleniyor...</span>
+            <!-- PWA Install Button -->
+            <button id="pwa-install-btn" class="btn btn-primary btn-sm btn-glow hidden"
+                style="margin: 15px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <!-- App Install / Download Center Button -->
+                <button id="pwa-install-btn" class="btn btn-primary btn-sm btn-glow"
+                    style="margin: 15px 0; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fa-solid fa-download"></i> Uygulamayı İndir
+                </button>
+
+                <div class="user-badge" id="sidebar-user-badge">
+                    <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+                    <div class="details">
+                        <span class="name" id="user-display-name">Misafir</span>
+                        <span class="status" id="user-display-status">Yükleniyor...</span>
+                    </div>
                 </div>
-            </div>
         </aside>
 
         <!-- Main Body -->
         <main class="main-content">
-            
+
             <!-- Header bar -->
             <header class="top-header">
                 <div class="date-selector" style="display:flex; align-items:center; gap:10px;">
                     <button id="prev-date"><i class="fa-solid fa-chevron-left"></i></button>
                     <span id="current-date-display">Yükleniyor...</span>
                     <button id="next-date"><i class="fa-solid fa-chevron-right"></i></button>
-                    <span id="header-city-clock" class="tag tag-neon-purple animate-pulse" style="font-size:0.8rem; text-transform:none; letter-spacing:normal;">Yükleniyor...</span>
-                    <button id="header-download-btn" class="btn btn-primary btn-sm btn-glow" style="padding:4px 10px; font-size:0.75rem;"><i class="fa-solid fa-download"></i> İndir</button>
+                    <span id="header-city-clock" class="tag tag-neon-purple animate-pulse"
+                        style="font-size:0.8rem; text-transform:none; letter-spacing:normal;">Yükleniyor...</span>
+                    <button id="header-download-btn" class="btn btn-primary btn-sm btn-glow"
+                        style="padding:4px 10px; font-size:0.75rem;"><i class="fa-solid fa-download"></i> İndir</button>
                 </div>
-                
+
                 <div class="quick-stats">
                     <div class="q-stat">
                         <span class="label">Level / XP</span>
@@ -415,7 +455,9 @@
                             <h3><i class="fa-solid fa-fire"></i> Günlük Durum Özeti</h3>
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <span id="dashboard-streak" style="font-size:0.8rem;"></span>
-                                <button class="btn btn-secondary btn-sm" id="btn-end-day-manual" style="border-color:var(--neon-orange); color:var(--neon-orange);"><i class="fa-solid fa-flag-checkered"></i> Günü Bitir & Raporla</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-end-day-manual"
+                                    style="border-color:var(--neon-orange); color:var(--neon-orange);"><i
+                                        class="fa-solid fa-flag-checkered"></i> Günü Bitir & Raporla</button>
                                 <span class="tag tag-neon-orange">Bugün</span>
                             </div>
                         </div>
@@ -429,28 +471,37 @@
                                 </div>
                                 <span class="label">Alınan Kalori</span>
                             </div>
-                            
+
                             <div class="linear-progress-list">
                                 <div class="lp-item">
                                     <div class="lp-header">
                                         <span>Su Tüketimi</span>
                                         <span id="dashboard-water-val">0 / 3.0 L</span>
                                     </div>
-                                    <div class="lp-bar-bg"><div class="lp-bar bg-neon-cyan" id="dashboard-water-bar" style="width: 0%"></div></div>
+                                    <div class="lp-bar-bg">
+                                        <div class="lp-bar bg-neon-cyan" id="dashboard-water-bar" style="width: 0%">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="lp-item">
                                     <div class="lp-header">
                                         <span>Antrenman Tamamlanma</span>
                                         <span id="dashboard-workout-status">Yapılmadı</span>
                                     </div>
-                                    <div class="lp-bar-bg"><div class="lp-bar bg-neon-green" id="dashboard-workout-bar" style="width: 0%"></div></div>
+                                    <div class="lp-bar-bg">
+                                        <div class="lp-bar bg-neon-green" id="dashboard-workout-bar" style="width: 0%">
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="lp-item">
                                     <div class="lp-header">
                                         <span>Uyku Süresi</span>
                                         <span id="dashboard-sleep-val">0 / 8 Saat</span>
                                     </div>
-                                    <div class="lp-bar-bg"><div class="lp-bar bg-neon-purple" id="dashboard-sleep-bar" style="width: 0%"></div></div>
+                                    <div class="lp-bar-bg">
+                                        <div class="lp-bar bg-neon-purple" id="dashboard-sleep-bar" style="width: 0%">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -462,7 +513,8 @@
                             <h3><i class="fa-solid fa-crown text-neon-orange"></i> Koçun Mesajı</h3>
                         </div>
                         <div class="coach-speech-bubble">
-                            <p id="dashboard-coach-tip">Profilini ve API anahtarını kaydettikten sonra buradayım şampiyon! Gününü planlamak veya antrenman yazmak için beni hazırla.</p>
+                            <p id="dashboard-coach-tip">Profilini ve API anahtarını kaydettikten sonra buradayım
+                                şampiyon! Gününü planlamak veya antrenman yazmak için beni hazırla.</p>
                         </div>
                         <div class="coach-avatar">
                             <i class="fa-solid fa-user-astronaut"></i> <span>EMREOUZOUN AI COACH</span>
@@ -519,32 +571,39 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-clock"></i> Zaman Çizelgesi ve Günün Programı</h3>
                             <div class="card-actions">
-                                <button class="btn btn-secondary btn-sm" id="btn-ai-generate-routine"><i class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> AI ile Günümü Planla</button>
-                                <button class="btn btn-primary btn-sm" id="btn-add-routine-item"><i class="fa-solid fa-plus"></i> Görev Ekle</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-ai-generate-routine"><i
+                                        class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> AI ile Günümü
+                                    Planla</button>
+                                <button class="btn btn-primary btn-sm" id="btn-add-routine-item"><i
+                                        class="fa-solid fa-plus"></i> Görev Ekle</button>
                             </div>
                         </div>
-                        
+
                         <div class="routine-container">
                             <div class="empty-state" id="routine-empty-state">
                                 <i class="fa-solid fa-calendar-check"></i>
                                 <p>Bugün için henüz bir zaman çizelgesi oluşturulmamış.</p>
-                                <button class="btn btn-secondary btn-sm" id="btn-load-default-routine">Varsayılan Planı Yükle</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-load-default-routine">Varsayılan Planı
+                                    Yükle</button>
                             </div>
-                            
+
                             <div id="routine-timeline-list" class="routine-timeline">
                                 <!-- Dinamik zaman çizelgesi ögeleri -->
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="glass-card">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-circle-question"></i> Bugün Ne Yapacaksın?</h3>
                         </div>
                         <div class="routine-assistant">
-                            <p class="subtitle">AI Koçuna bugün ne yapmak istediğini yaz, tüm gününü iş, çalışma ve spor hedeflerine göre planlasın.</p>
-                            <textarea id="routine-prompt-input" rows="4" placeholder="Örn: 'Bugün 5 saat iş/yazılım odaklanması yapacağım, 1 saat toplantım var, akşam 6'da göğüs antrenmanım var. Günü planla kral!'"></textarea>
-                            <button class="btn btn-primary btn-glow w-100 mt-10" id="btn-submit-ai-routine">Programı Oluştur</button>
+                            <p class="subtitle">AI Koçuna bugün ne yapmak istediğini yaz, tüm gününü iş, çalışma ve spor
+                                hedeflerine göre planlasın.</p>
+                            <textarea id="routine-prompt-input" rows="4"
+                                placeholder="Örn: 'Bugün 5 saat iş/yazılım odaklanması yapacağım, 1 saat toplantım var, akşam 6'da göğüs antrenmanım var. Günü planla kral!'"></textarea>
+                            <button class="btn btn-primary btn-glow w-100 mt-10" id="btn-submit-ai-routine">Programı
+                                Oluştur</button>
                         </div>
                     </div>
                 </div>
@@ -558,26 +617,34 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-dumbbell"></i> Bugünkü Antrenman Programı</h3>
                             <div class="card-actions">
-                                <button class="btn btn-success btn-sm btn-glow" id="btn-start-workout-session"><i class="fa-solid fa-play"></i> Antrenmana Başla</button>
-                                <button class="btn btn-secondary btn-sm" id="btn-ai-generate-workout"><i class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> AI Antrenman Üret</button>
-                                <button class="btn btn-primary btn-sm" id="btn-add-exercise"><i class="fa-solid fa-plus"></i> Egzersiz Ekle</button>
+                                <button class="btn btn-success btn-sm btn-glow" id="btn-start-workout-session"><i
+                                        class="fa-solid fa-play"></i> Antrenmana Başla</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-ai-generate-workout"><i
+                                        class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> AI Antrenman
+                                    Üret</button>
+                                <button class="btn btn-primary btn-sm" id="btn-add-exercise"><i
+                                        class="fa-solid fa-plus"></i> Egzersiz Ekle</button>
                             </div>
                         </div>
-                        
+
                         <div id="workout-editor">
                             <div class="empty-state" id="workout-empty-state">
                                 <i class="fa-solid fa-circle-info"></i>
-                                <p>Antrenman programı bulunamadı. Kendi egzersizlerini ekleyebilir veya AI Koç'un sana özel program üretmesini isteyebilirsin.</p>
+                                <p>Antrenman programı bulunamadı. Kendi egzersizlerini ekleyebilir veya AI Koç'un sana
+                                    özel program üretmesini isteyebilirsin.</p>
                                 <div class="template-buttons">
-                                    <button class="btn btn-secondary btn-sm" id="btn-load-hypertrophy">Kas Geliştirme Şablonu</button>
-                                    <button class="btn btn-secondary btn-sm" id="btn-load-strength">Güç/Kuvvet Şablonu</button>
+                                    <button class="btn btn-secondary btn-sm" id="btn-load-hypertrophy">Kas Geliştirme
+                                        Şablonu</button>
+                                    <button class="btn btn-secondary btn-sm" id="btn-load-strength">Güç/Kuvvet
+                                        Şablonu</button>
                                 </div>
                             </div>
                             <div id="exercise-list" class="exercise-list"></div>
                         </div>
 
                         <div class="card-footer hidden" id="workout-footer">
-                            <button class="btn btn-success btn-glow" id="btn-save-workout"><i class="fa-solid fa-check"></i> Antrenmanı Tamamla ve Kaydet</button>
+                            <button class="btn btn-success btn-glow" id="btn-save-workout"><i
+                                    class="fa-solid fa-check"></i> Antrenmanı Tamamla ve Kaydet</button>
                         </div>
                     </div>
 
@@ -587,14 +654,18 @@
                             <h3><i class="fa-solid fa-arrow-trend-up"></i> İlerici Yükleme Asistanı</h3>
                         </div>
                         <div class="advisor-content">
-                            <p class="desc">EO Coach, bir önceki seanstaki performansına göre sana hedefler belirler.</p>
+                            <p class="desc">EO Coach, bir önceki seanstaki performansına göre sana hedefler belirler.
+                            </p>
                             <div id="overload-tips">
                                 <div class="empty-state-sm">Egzersiz eklediğinde hedefleriniz burada görünecektir.</div>
                             </div>
                             <hr class="divider">
                             <div class="ai-workout-critique-box">
-                                <button class="btn btn-secondary btn-sm w-100" id="btn-ai-analyze-workout-prog"><i class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> Programımı AI ile Analiz Et</button>
-                                <div id="ai-workout-critique-content" class="mt-10" style="font-size:0.8rem; line-height:1.4; color:var(--text-secondary);">
+                                <button class="btn btn-secondary btn-sm w-100" id="btn-ai-analyze-workout-prog"><i
+                                        class="fa-solid fa-wand-magic-sparkles text-neon-purple"></i> Programımı AI ile
+                                    Analiz Et</button>
+                                <div id="ai-workout-critique-content" class="mt-10"
+                                    style="font-size:0.8rem; line-height:1.4; color:var(--text-secondary);">
                                     Burada AI koçunuzun antrenman programınız için yaptığı öneriler belirecektir.
                                 </div>
                             </div>
@@ -610,9 +681,10 @@
                     <div class="glass-card span-2">
                         <div class="card-header">
                             <h3><i class="fa-solid fa-utensils"></i> Öğün & Kalori Günlüğü</h3>
-                            <button class="btn btn-secondary btn-sm" id="btn-copy-yesterday-meals"><i class="fa-solid fa-copy"></i> Dünkü Öğünleri Kopyala</button>
+                            <button class="btn btn-secondary btn-sm" id="btn-copy-yesterday-meals"><i
+                                    class="fa-solid fa-copy"></i> Dünkü Öğünleri Kopyala</button>
                         </div>
-                        
+
                         <!-- AI Food Input Parser (PREMIUM FEATURE) -->
                         <div class="ai-food-parser-box">
                             <div class="ai-input-header">
@@ -621,9 +693,14 @@
                             </div>
                             <p class="subtitle">Yediklerini doğal dilde yaz, koçun makroları otomatik bulsun!</p>
                             <div class="ai-input-row" style="display: flex; gap: 8px;">
-                                <input type="text" id="ai-food-text-input" placeholder="Örn: 100 gr yulaf ezmesi, 3 yumurta...">
-                                <button class="btn btn-primary btn-glow" id="btn-parse-ai-food" style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i> Ekle</button>
-                                <button class="btn btn-secondary btn-glow" id="btn-parse-ai-vision" style="white-space: nowrap; border-color: var(--neon-purple); color: var(--neon-purple);"><i class="fa-solid fa-camera"></i> Fotoğraf</button>
+                                <input type="text" id="ai-food-text-input"
+                                    placeholder="Örn: 100 gr yulaf ezmesi, 3 yumurta...">
+                                <button class="btn btn-primary btn-glow" id="btn-parse-ai-food"
+                                    style="white-space: nowrap;"><i class="fa-solid fa-magnifying-glass"></i>
+                                    Ekle</button>
+                                <button class="btn btn-secondary btn-glow" id="btn-parse-ai-vision"
+                                    style="white-space: nowrap; border-color: var(--neon-purple); color: var(--neon-purple);"><i
+                                        class="fa-solid fa-camera"></i> Fotoğraf</button>
                                 <input type="file" id="ai-food-image-input" accept="image/*" style="display: none;">
                             </div>
                         </div>
@@ -633,9 +710,12 @@
                             <div class="quick-add-nutrition">
                                 <h4>Hızlı Ekle</h4>
                                 <div class="quick-buttons">
-                                    <button class="btn btn-secondary btn-quick" data-kcal="150" data-p="10" data-c="20" data-f="3">+150 kcal (Ara Öğün)</button>
-                                    <button class="btn btn-secondary btn-quick" data-kcal="400" data-p="30" data-c="50" data-f="8">+400 kcal (Hafif Öğün)</button>
-                                    <button class="btn btn-secondary btn-quick" data-kcal="750" data-p="50" data-c="90" data-f="15">+750 kcal (Ana Öğün)</button>
+                                    <button class="btn btn-secondary btn-quick" data-kcal="150" data-p="10" data-c="20"
+                                        data-f="3">+150 kcal (Ara Öğün)</button>
+                                    <button class="btn btn-secondary btn-quick" data-kcal="400" data-p="30" data-c="50"
+                                        data-f="8">+400 kcal (Hafif Öğün)</button>
+                                    <button class="btn btn-secondary btn-quick" data-kcal="750" data-p="50" data-c="90"
+                                        data-f="15">+750 kcal (Ana Öğün)</button>
                                 </div>
                             </div>
 
@@ -666,7 +746,8 @@
                                         <input type="number" id="meal-f" required min="0">
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> Manuel Ekle</button>
+                                <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i>
+                                    Manuel Ekle</button>
                             </form>
                         </div>
 
@@ -710,8 +791,10 @@
                                 <span class="water-text" id="water-liters-display">0.0 L</span>
                             </div>
                             <div class="water-controls">
-                                <button class="btn btn-circle" id="btn-water-minus"><i class="fa-solid fa-minus"></i></button>
-                                <button class="btn btn-circle btn-primary" id="btn-water-plus"><i class="fa-solid fa-plus"></i></button>
+                                <button class="btn btn-circle" id="btn-water-minus"><i
+                                        class="fa-solid fa-minus"></i></button>
+                                <button class="btn btn-circle btn-primary" id="btn-water-plus"><i
+                                        class="fa-solid fa-plus"></i></button>
                             </div>
                             <p class="subtitle text-center">Hedef: <span id="water-target-display">3.0</span> Litre</p>
                         </div>
@@ -731,7 +814,8 @@
                             <!-- Uyku Süresi -->
                             <div class="form-group slider-group">
                                 <div class="slider-header">
-                                    <label for="rec-sleep"><i class="fa-solid fa-bed text-neon-purple"></i> Dün Gece Kaç Saat Uydun?</label>
+                                    <label for="rec-sleep"><i class="fa-solid fa-bed text-neon-purple"></i> Dün Gece Kaç
+                                        Saat Uydun?</label>
                                     <span id="rec-sleep-val-display">8.0 Saat</span>
                                 </div>
                                 <input type="range" id="rec-sleep" min="3" max="14" step="0.5" value="8">
@@ -739,27 +823,38 @@
 
                             <!-- Uyanış Hissiyatı (Button-based) -->
                             <div class="form-group button-selector-group">
-                                <label><i class="fa-solid fa-cloud-sun text-neon-orange"></i> Sabah Nasıl Uyandın?</label>
+                                <label><i class="fa-solid fa-cloud-sun text-neon-orange"></i> Sabah Nasıl
+                                    Uyandın?</label>
                                 <div class="btn-selector" id="wake-feeling-selector">
-                                    <button type="button" class="select-btn" data-val="1"><i class="fa-solid fa-face-dizzy"></i> Çok Uykulu / Yorgun</button>
-                                    <button type="button" class="select-btn" data-val="2"><i class="fa-solid fa-face-meh"></i> Orta / Uykumu Almadım</button>
-                                    <button type="button" class="select-btn active" data-val="3"><i class="fa-solid fa-face-smile"></i> Normal / Dinlenmiş</button>
-                                    <button type="button" class="select-btn" data-val="4"><i class="fa-solid fa-face-laugh-beam"></i> Çok Dinç / Zinde</button>
+                                    <button type="button" class="select-btn" data-val="1"><i
+                                            class="fa-solid fa-face-dizzy"></i> Çok Uykulu / Yorgun</button>
+                                    <button type="button" class="select-btn" data-val="2"><i
+                                            class="fa-solid fa-face-meh"></i> Orta / Uykumu Almadım</button>
+                                    <button type="button" class="select-btn active" data-val="3"><i
+                                            class="fa-solid fa-face-smile"></i> Normal / Dinlenmiş</button>
+                                    <button type="button" class="select-btn" data-val="4"><i
+                                            class="fa-solid fa-face-laugh-beam"></i> Çok Dinç / Zinde</button>
                                 </div>
                             </div>
 
                             <!-- Zihinsel Odak (Button-based) -->
                             <div class="form-group button-selector-group">
-                                <label><i class="fa-solid fa-brain text-neon-purple"></i> Şu An Zihinsel Odak Durumun Nasıl?</label>
+                                <label><i class="fa-solid fa-brain text-neon-purple"></i> Şu An Zihinsel Odak Durumun
+                                    Nasıl?</label>
                                 <div class="btn-selector" id="focus-feeling-selector">
-                                    <button type="button" class="select-btn" data-val="1"><i class="fa-solid fa-head-side-virus"></i> Dağınık / Stresli</button>
-                                    <button type="button" class="select-btn" data-val="2"><i class="fa-solid fa-head-side-cough"></i> Yorgun / İsteksiz</button>
-                                    <button type="button" class="select-btn active" data-val="3"><i class="fa-solid fa-head-side-smile"></i> Normal / Sakin</button>
-                                    <button type="button" class="select-btn" data-val="4"><i class="fa-solid fa-lightbulb"></i> Çok Odaklı / Keskin</button>
+                                    <button type="button" class="select-btn" data-val="1"><i
+                                            class="fa-solid fa-head-side-virus"></i> Dağınık / Stresli</button>
+                                    <button type="button" class="select-btn" data-val="2"><i
+                                            class="fa-solid fa-head-side-cough"></i> Yorgun / İsteksiz</button>
+                                    <button type="button" class="select-btn active" data-val="3"><i
+                                            class="fa-solid fa-head-side-smile"></i> Normal / Sakin</button>
+                                    <button type="button" class="select-btn" data-val="4"><i
+                                            class="fa-solid fa-lightbulb"></i> Çok Odaklı / Keskin</button>
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-glow"><i class="fa-solid fa-floppy-disk"></i> Günlük Durumu Kaydet</button>
+                            <button type="submit" class="btn btn-primary btn-glow"><i
+                                    class="fa-solid fa-floppy-disk"></i> Günlük Durumu Kaydet</button>
                         </form>
                     </div>
 
@@ -799,23 +894,30 @@
                                 </div>
                             </div>
                             <div style="display:flex; gap:8px;">
-                                <button class="btn btn-secondary btn-sm" id="btn-generate-report"><i class="fa-solid fa-chart-pie"></i> Haftalık Gelişim Raporu</button>
-                                <button class="btn btn-secondary btn-sm" id="btn-clear-chat" title="Bugünkü Sohbeti Temizle"><i class="fa-solid fa-trash-can"></i> Temizle</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-generate-report"><i
+                                        class="fa-solid fa-chart-pie"></i> Haftalık Gelişim Raporu</button>
+                                <button class="btn btn-secondary btn-sm" id="btn-clear-chat"
+                                    title="Bugünkü Sohbeti Temizle"><i class="fa-solid fa-trash-can"></i>
+                                    Temizle</button>
                             </div>
                         </div>
-                        
+
                         <div class="chat-messages" id="chat-messages-container">
                             <div class="message ai">
                                 <div class="msg-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
                                 <div class="msg-text" id="chat-welcome-msg">
-                                    Selam kral! Ben senin koçun EmreOuzoun AI. Profil verilerini okudum, bugünden itibaren hem yazılım/akademik hedeflerini hem de spor salonundaki ağırlıklarını beraber uçuracağız. Bugün durumlar nasıl, ne yedik ne bastık? Soruları sor, gerisini bana bırak!
+                                    Selam kral! Ben senin koçun EmreOuzoun AI. Profil verilerini okudum, bugünden
+                                    itibaren hem yazılım/akademik hedeflerini hem de spor salonundaki ağırlıklarını
+                                    beraber uçuracağız. Bugün durumlar nasıl, ne yedik ne bastık? Soruları sor, gerisini
+                                    bana bırak!
                                 </div>
                             </div>
                         </div>
 
                         <div class="chat-input-area">
                             <input type="text" id="chat-input" placeholder="Koçunla samimi bir sohbete başla...">
-                            <button class="btn btn-primary" id="btn-send-message"><i class="fa-solid fa-paper-plane"></i></button>
+                            <button class="btn btn-primary" id="btn-send-message"><i
+                                    class="fa-solid fa-paper-plane"></i></button>
                         </div>
                     </div>
 
@@ -840,7 +942,9 @@
                             <hr class="divider">
                             <div class="insight-tip-box">
                                 <span class="tip-title"><i class="fa-solid fa-crown"></i> Koç Tavsiyesi:</span>
-                                <p id="insight-coach-tip">Verileri girdikçe, burada yapay zekanın senin için hazırladığı günlük öğün sayısı tavsiyeleri, toparlanma durumun ve antrenmanda neyi arttırman gerektiğine dair ipuçları belirecektir.</p>
+                                <p id="insight-coach-tip">Verileri girdikçe, burada yapay zekanın senin için hazırladığı
+                                    günlük öğün sayısı tavsiyeleri, toparlanma durumun ve antrenmanda neyi arttırman
+                                    gerektiğine dair ipuçları belirecektir.</p>
                             </div>
                         </div>
                     </div>
@@ -854,21 +958,23 @@
                         <div class="card-header">
                             <h3><i class="fa-solid fa-gear"></i> Sistem Ayarları</h3>
                         </div>
-                        
+
                         <form id="settings-form" class="settings-form">
                             <h4>Gemini API Entegrasyonu</h4>
-                            <p class="subtitle">AI Koç sohbet panelini, besin ayrıştırmayı ve antrenman üreticiyi aktif etmek için Gemini API anahtarınızı girin.</p>
-                            
+                            <p class="subtitle">AI Koç sohbet panelini, besin ayrıştırmayı ve antrenman üreticiyi aktif
+                                etmek için Gemini API anahtarınızı girin.</p>
+
                             <div class="form-group">
                                 <label for="setting-api-key">Gemini API Key</label>
                                 <div class="password-input-wrapper">
                                     <input type="password" id="setting-api-key" placeholder="AIzaSy...">
-                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-key-visibility"><i class="fa-solid fa-eye"></i></button>
+                                    <button type="button" class="btn btn-secondary btn-sm"
+                                        id="btn-toggle-key-visibility"><i class="fa-solid fa-eye"></i></button>
                                 </div>
                             </div>
-                            
+
                             <hr class="divider">
-                            
+
                             <h4>Kişisel Profil Güncelleme</h4>
                             <div class="form-row">
                                 <div class="form-group">
@@ -926,7 +1032,7 @@
                                     </select>
                                 </div>
                             </div>
-                            
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="set-city">Bulunduğunuz Şehir</label>
@@ -937,7 +1043,7 @@
                                     <input type="time" id="set-sleep-time" required>
                                 </div>
                             </div>
-                            
+
                             <div class="form-group mt-10" style="margin-bottom:15px;">
                                 <label for="set-privacy">Profil Gizliliği</label>
                                 <select id="set-privacy">
@@ -945,9 +1051,12 @@
                                     <option value="private">Gizli (Profilini sadece sen görürsün)</option>
                                 </select>
                             </div>
-                            
-                            <button type="submit" class="btn btn-primary btn-glow" style="width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Ayarları Kaydet</button>
-                            <button type="button" class="btn btn-secondary mt-10" id="btn-logout" style="width: 100%;"><i class="fa-solid fa-right-from-bracket"></i> Oturumu Kapat / Kullanıcı Değiştir</button>
+
+                            <button type="submit" class="btn btn-primary btn-glow" style="width: 100%;"><i
+                                    class="fa-solid fa-floppy-disk"></i> Ayarları Kaydet</button>
+                            <button type="button" class="btn btn-secondary mt-10" id="btn-logout"
+                                style="width: 100%;"><i class="fa-solid fa-right-from-bracket"></i> Oturumu Kapat /
+                                Kullanıcı Değiştir</button>
                         </form>
                     </div>
                 </div>
@@ -957,13 +1066,15 @@
             <section id="tab-social" class="tab-content">
                 <div class="card-header" style="margin-bottom: 20px;">
                     <h3><i class="fa-solid fa-users text-neon-purple"></i> Sosyal & Liderlik Tablosu</h3>
-                    <p class="subtitle">Diğer kullanıcıların kaldırış PR'larını ve aktif antrenman programlarını inceleyin.</p>
+                    <p class="subtitle">Diğer kullanıcıların kaldırış PR'larını ve aktif antrenman programlarını
+                        inceleyin.</p>
                 </div>
-                
+
                 <div class="glass-card animate-slide-up" style="padding: 20px; overflow-x: auto;">
                     <table class="social-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
-                            <tr style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight:600;">
+                            <tr
+                                style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight:600;">
                                 <th style="padding: 12px 8px;">Kullanıcı</th>
                                 <th style="padding: 12px 8px;">Boy / Kilo</th>
                                 <th style="padding: 12px 8px; text-align: center;">Squat PR</th>
@@ -1003,7 +1114,8 @@
             <h3>Yeni Egzersiz Ekle</h3>
             <div class="form-group">
                 <label for="exercise-name-input">Egzersiz Adı</label>
-                <input type="text" id="exercise-name-input" placeholder="Squat, Bench Press vb." list="default-exercises">
+                <input type="text" id="exercise-name-input" placeholder="Squat, Bench Press vb."
+                    list="default-exercises">
                 <datalist id="default-exercises">
                     <option value="Squat"></option>
                     <option value="Bench Press"></option>
@@ -1046,28 +1158,41 @@
     <!-- Active Workout Session Overlay -->
     <div id="workout-session-overlay" class="overlay hidden">
         <div class="glass-card onboarding-card session-card fade-in" style="max-width: 500px; width: 100%;">
-            <div class="session-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+            <div class="session-header"
+                style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
                 <div class="session-progress" style="display: flex; flex-direction: column; gap: 4px;">
-                    <span id="session-ex-progress" class="tag tag-neon-orange" style="font-size:0.75rem;">Egzersiz 1 / 5</span>
-                    <span id="session-set-progress" style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">Set 1 / 3</span>
+                    <span id="session-ex-progress" class="tag tag-neon-orange" style="font-size:0.75rem;">Egzersiz 1 /
+                        5</span>
+                    <span id="session-set-progress"
+                        style="font-size:0.8rem; font-weight:700; color:var(--text-secondary);">Set 1 / 3</span>
                 </div>
-                <button class="btn-icon" id="btn-cancel-session" style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-icon" id="btn-cancel-session"
+                    style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            
+
             <div class="session-body">
-                <h2 id="session-exercise-name" class="text-center" style="font-family: var(--font-header); font-weight:800; font-size:1.6rem; color: var(--text-primary); margin-bottom:12px;">Bench Press</h2>
-                
-                <div class="coach-target-box mt-10" style="background: rgba(249, 115, 22, 0.04); border: 1px dashed var(--neon-orange); border-radius:12px; padding: 12px; margin-bottom: 16px;">
-                    <span class="label" style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--neon-orange); display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-dumbbell"></i> Koçunun Hedefi</span>
-                    <p id="session-target-desc" style="font-size:0.95rem; font-weight:600; color:var(--text-primary); margin-top:4px;">62.5 kg x 10 tekrar yap (RIR 1)</p>
+                <h2 id="session-exercise-name" class="text-center"
+                    style="font-family: var(--font-header); font-weight:800; font-size:1.6rem; color: var(--text-primary); margin-bottom:12px;">
+                    Bench Press</h2>
+
+                <div class="coach-target-box mt-10"
+                    style="background: rgba(249, 115, 22, 0.04); border: 1px dashed var(--neon-orange); border-radius:12px; padding: 12px; margin-bottom: 16px;">
+                    <span class="label"
+                        style="font-size:0.75rem; text-transform:uppercase; font-weight:700; color:var(--neon-orange); display:flex; align-items:center; gap:6px;"><i
+                            class="fa-solid fa-dumbbell"></i> Koçunun Hedefi</span>
+                    <p id="session-target-desc"
+                        style="font-size:0.95rem; font-weight:600; color:var(--text-primary); margin-top:4px;">62.5 kg x
+                        10 tekrar yap (RIR 1)</p>
                 </div>
-                
+
                 <!-- Input Panel -->
                 <div id="session-input-panel" class="mt-20">
                     <div class="form-row">
                         <div class="form-group">
                             <label for="session-kg-input">Ağırlık (kg)</label>
-                            <input type="number" step="0.5" id="session-kg-input" placeholder="Örn: 60" style="width:100%;">
+                            <input type="number" step="0.5" id="session-kg-input" placeholder="Örn: 60"
+                                style="width:100%;">
                         </div>
                         <div class="form-group">
                             <label for="session-reps-input">Tekrar</label>
@@ -1077,27 +1202,44 @@
                     <div class="form-group mt-10">
                         <label for="session-rpe-input" style="display:flex; justify-content:space-between;">
                             <span>Tükenişe Kalan Tekrar (RIR)</span>
-                            <span id="session-rpe-display" style="font-weight:700; color:var(--neon-orange);">Tükenişe 2 Tekrar Kala (RIR 2)</span>
+                            <span id="session-rpe-display" style="font-weight:700; color:var(--neon-orange);">Tükenişe 2
+                                Tekrar Kala (RIR 2)</span>
                         </label>
-                        <input type="range" id="session-rpe-input" min="0" max="4" step="1" value="2" style="width:100%;">
-                        <p class="subtitle" style="font-size:0.75rem; margin-top:4px; margin-bottom:0;">RIR 0: Tam Tükeniş (Tükenmeye Kadar), RIR 2: Tükenişe 2 tekrar kala.</p>
+                        <input type="range" id="session-rpe-input" min="0" max="4" step="1" value="2"
+                            style="width:100%;">
+                        <p class="subtitle" style="font-size:0.75rem; margin-top:4px; margin-bottom:0;">RIR 0: Tam
+                            Tükeniş (Tükenmeye Kadar), RIR 2: Tükenişe 2 tekrar kala.</p>
                     </div>
-                    
-                    <button class="btn btn-primary btn-glow w-100 mt-20" id="btn-submit-session-set"><i class="fa-solid fa-circle-check"></i> Seti Kaydet & Dinlenmeye Başla</button>
+
+                    <button class="btn btn-primary btn-glow w-100 mt-20" id="btn-submit-session-set"><i
+                            class="fa-solid fa-circle-check"></i> Seti Kaydet & Dinlenmeye Başla</button>
                 </div>
-                
+
                 <!-- Timer Panel -->
-                <div id="session-timer-panel" class="mt-20 hidden text-center" style="background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); border-radius:16px; padding:20px;">
-                    <h3 style="font-family: var(--font-header); font-weight:700; font-size:1.1rem; color:var(--neon-cyan);"><i class="fa-solid fa-clock"></i> Dinlenme Süresi</h3>
-                    <div class="timer-display mt-10" id="session-timer-display" style="font-family: var(--font-header); font-weight:800; font-size:3.2rem; color:var(--neon-cyan); text-shadow:var(--shadow-cyan);">90</div>
-                    <div class="lp-bar-bg mt-10" style="height: 6px; background: rgba(14, 165, 233, 0.1); border-radius:3px;"><div class="lp-bar bg-neon-cyan" id="session-timer-bar" style="width: 100%; height:100%; border-radius:3px;"></div></div>
-                    <button class="btn btn-secondary btn-sm mt-20 w-100" id="btn-skip-timer">Dinlenmeyi Atla & Sonraki Set</button>
+                <div id="session-timer-panel" class="mt-20 hidden text-center"
+                    style="background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); border-radius:16px; padding:20px;">
+                    <h3
+                        style="font-family: var(--font-header); font-weight:700; font-size:1.1rem; color:var(--neon-cyan);">
+                        <i class="fa-solid fa-clock"></i> Dinlenme Süresi</h3>
+                    <div class="timer-display mt-10" id="session-timer-display"
+                        style="font-family: var(--font-header); font-weight:800; font-size:3.2rem; color:var(--neon-cyan); text-shadow:var(--shadow-cyan);">
+                        90</div>
+                    <div class="lp-bar-bg mt-10"
+                        style="height: 6px; background: rgba(14, 165, 233, 0.1); border-radius:3px;">
+                        <div class="lp-bar bg-neon-cyan" id="session-timer-bar"
+                            style="width: 100%; height:100%; border-radius:3px;"></div>
+                    </div>
+                    <button class="btn btn-secondary btn-sm mt-20 w-100" id="btn-skip-timer">Dinlenmeyi Atla & Sonraki
+                        Set</button>
                 </div>
             </div>
-            
-            <div class="session-footer mt-20" style="display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 24px;">
-                <button class="btn btn-secondary" id="btn-prev-session-step"><i class="fa-solid fa-chevron-left"></i> Geri</button>
-                <button class="btn btn-primary" id="btn-next-session-step">Atla / Sonraki <i class="fa-solid fa-chevron-right"></i></button>
+
+            <div class="session-footer mt-20"
+                style="display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--border-color); padding-top: 16px; margin-top: 24px;">
+                <button class="btn btn-secondary" id="btn-prev-session-step"><i class="fa-solid fa-chevron-left"></i>
+                    Geri</button>
+                <button class="btn btn-primary" id="btn-next-session-step">Atla / Sonraki <i
+                        class="fa-solid fa-chevron-right"></i></button>
             </div>
         </div>
     </div>
@@ -1105,17 +1247,22 @@
     <!-- Social User Detail Modal -->
     <div id="social-user-modal" class="modal-overlay hidden">
         <div class="glass-card modal-card" style="max-width: 500px; width: 100%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
                 <h3 id="social-modal-user-title">Kullanıcı Profili</h3>
-                <button class="btn-icon" id="btn-close-social-modal" style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-icon" id="btn-close-social-modal"
+                    style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <div id="social-modal-user-stats" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px; text-align:center;">
+
+            <div id="social-modal-user-stats"
+                style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:20px; text-align:center;">
                 <!-- JS ile doldurulacak -->
             </div>
-            
+
             <h4 style="margin-bottom:8px;"><i class="fa-solid fa-dumbbell"></i> Aktif Antrenman Programı</h4>
-            <div id="social-modal-user-program" class="glass-card" style="background: rgba(255,255,255,0.3); padding:12px; max-height: 250px; overflow-y:auto; font-size: 0.9rem;">
+            <div id="social-modal-user-program" class="glass-card"
+                style="background: rgba(255,255,255,0.3); padding:12px; max-height: 250px; overflow-y:auto; font-size: 0.9rem;">
                 <!-- JS ile doldurulacak -->
             </div>
         </div>
@@ -1124,62 +1271,82 @@
     <!-- Daily Report Modal -->
     <div id="daily-report-modal" class="modal-overlay hidden">
         <div class="glass-card modal-card" style="max-width: 550px; width: 100%; max-height: 85vh; overflow-y: auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
-                <h3 style="display:flex; align-items:center; gap:8px;"><i class="fa-solid fa-flag-checkered text-neon-orange"></i> Günlük Rapor & Değerlendirme</h3>
-                <button class="btn-icon" id="btn-close-report-modal" style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+                <h3 style="display:flex; align-items:center; gap:8px;"><i
+                        class="fa-solid fa-flag-checkered text-neon-orange"></i> Günlük Rapor & Değerlendirme</h3>
+                <button class="btn-icon" id="btn-close-report-modal"
+                    style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer;"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
-            
-            <div id="daily-report-date" style="font-weight:700; color:var(--text-secondary); margin-bottom:16px; text-align:center; font-size:1.1rem;">-</div>
-            
+
+            <div id="daily-report-date"
+                style="font-weight:700; color:var(--text-secondary); margin-bottom:16px; text-align:center; font-size:1.1rem;">
+                -</div>
+
             <div class="report-section" style="margin-bottom: 20px;">
-                <h4 style="color:var(--neon-orange); margin-bottom:8px;"><i class="fa-solid fa-apple-whole"></i> Beslenme Özeti</h4>
+                <h4 style="color:var(--neon-orange); margin-bottom:8px;"><i class="fa-solid fa-apple-whole"></i>
+                    Beslenme Özeti</h4>
                 <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; text-align:center;">
-                    <div style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
+                    <div
+                        style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
                         <span style="font-size:0.75rem; color:var(--text-secondary); display:block;">Kalori</span>
                         <strong id="rep-kcal" style="font-size:0.9rem; color:var(--text-primary);">0 / 0</strong>
                     </div>
-                    <div style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
+                    <div
+                        style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
                         <span style="font-size:0.75rem; color:var(--text-secondary); display:block;">Protein</span>
                         <strong id="rep-prot" style="font-size:0.9rem; color:var(--text-primary);">0g / 0g</strong>
                     </div>
-                    <div style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
+                    <div
+                        style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
                         <span style="font-size:0.75rem; color:var(--text-secondary); display:block;">Karbonhidrat</span>
                         <strong id="rep-carb" style="font-size:0.9rem; color:var(--text-primary);">0g / 0g</strong>
                     </div>
-                    <div style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
+                    <div
+                        style="background:rgba(249,115,22,0.05); padding:8px; border-radius:8px; border: 1px solid rgba(249,115,22,0.1);">
                         <span style="font-size:0.75rem; color:var(--text-secondary); display:block;">Yağ</span>
                         <strong id="rep-fat" style="font-size:0.9rem; color:var(--text-primary);">0g / 0g</strong>
                     </div>
                 </div>
             </div>
-            
+
             <div class="report-section" style="margin-bottom: 20px;">
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                     <div>
-                        <h4 style="color:var(--neon-cyan); margin-bottom:8px;"><i class="fa-solid fa-droplet"></i> Su Tüketimi</h4>
-                        <div style="background:rgba(14,165,233,0.05); padding:10px; border-radius:8px; text-align:center; border: 1px solid rgba(14,165,233,0.1);">
+                        <h4 style="color:var(--neon-cyan); margin-bottom:8px;"><i class="fa-solid fa-droplet"></i> Su
+                            Tüketimi</h4>
+                        <div
+                            style="background:rgba(14,165,233,0.05); padding:10px; border-radius:8px; text-align:center; border: 1px solid rgba(14,165,233,0.1);">
                             <strong id="rep-water" style="color:var(--text-primary);">0 / 0 L</strong>
                         </div>
                     </div>
                     <div>
-                        <h4 style="color:var(--neon-green); margin-bottom:8px;"><i class="fa-solid fa-list-check"></i> Günlük Rutinler</h4>
-                        <div style="background:rgba(34,197,94,0.05); padding:10px; border-radius:8px; text-align:center; border: 1px solid rgba(34,197,94,0.1);">
+                        <h4 style="color:var(--neon-green); margin-bottom:8px;"><i class="fa-solid fa-list-check"></i>
+                            Günlük Rutinler</h4>
+                        <div
+                            style="background:rgba(34,197,94,0.05); padding:10px; border-radius:8px; text-align:center; border: 1px solid rgba(34,197,94,0.1);">
                             <strong id="rep-routine" style="color:var(--text-primary);">0% (0 / 0)</strong>
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <div class="report-section" style="margin-bottom: 20px;">
-                <h4 style="color:var(--neon-purple); margin-bottom:8px;"><i class="fa-solid fa-dumbbell"></i> Antrenman Özeti</h4>
-                <div id="rep-workout-list" style="background:rgba(168,85,247,0.05); padding:12px; border-radius:8px; max-height:120px; overflow-y:auto; font-size:0.85rem; border: 1px solid rgba(168,85,247,0.1);">
+                <h4 style="color:var(--neon-purple); margin-bottom:8px;"><i class="fa-solid fa-dumbbell"></i> Antrenman
+                    Özeti</h4>
+                <div id="rep-workout-list"
+                    style="background:rgba(168,85,247,0.05); padding:12px; border-radius:8px; max-height:120px; overflow-y:auto; font-size:0.85rem; border: 1px solid rgba(168,85,247,0.1);">
                     Antrenman yapılmadı.
                 </div>
             </div>
-            
-            <div class="report-section" style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
-                <h4 style="color:var(--neon-purple); margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i class="fa-solid fa-brain"></i> AI Koç Gün Sonu Yorumu</h4>
-                <div id="rep-ai-commentary" class="coach-speech" style="min-height: 80px; padding:12px; font-size:0.9rem; line-height:1.45; font-style:italic; border-radius: 8px;">
+
+            <div class="report-section"
+                style="margin-bottom: 12px; border-top: 1px solid var(--border-color); padding-top: 16px;">
+                <h4 style="color:var(--neon-purple); margin-bottom:8px; display:flex; align-items:center; gap:6px;"><i
+                        class="fa-solid fa-brain"></i> AI Koç Gün Sonu Yorumu</h4>
+                <div id="rep-ai-commentary" class="coach-speech"
+                    style="min-height: 80px; padding:12px; font-size:0.9rem; line-height:1.45; font-style:italic; border-radius: 8px;">
                     Verileriniz inceleniyor, Koçunuz rapor hazırlıyor... 🧠💬
                 </div>
             </div>
@@ -1188,23 +1355,31 @@
 
     <!-- Multi-Platform App Download Modal (Windows / Android / iOS / Mac) -->
     <div id="app-download-modal" class="modal-overlay hidden" style="z-index: 9999;">
-        <div class="glass-card modal-card fade-in" style="max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto;">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
+        <div class="glass-card modal-card fade-in"
+            style="max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto;">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:12px; margin-bottom:16px;">
                 <h3 style="margin:0; display:flex; align-items:center; gap:10px;">
                     <i class="fa-solid fa-download text-neon-orange"></i> EmreOuzoun AI Coach — Uygulama İndirme Merkezi
                 </h3>
-                <button class="btn-icon" id="btn-close-download-modal" style="font-size: 1.3rem; color: var(--text-muted); cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                <button class="btn-icon" id="btn-close-download-modal"
+                    style="font-size: 1.3rem; color: var(--text-muted); cursor: pointer;"><i
+                        class="fa-solid fa-xmark"></i></button>
             </div>
 
             <p class="subtitle" style="margin-bottom:16px;">
-                Uygulamayı kullandığınız cihaza tek tıkla indirin veya kurun. İndirilen taşınabilir uygulama çevrimdışı (offline) veri depolama desteğine sahiptir.
+                Uygulamayı kullandığınız cihaza tek tıkla indirin veya kurun. İndirilen taşınabilir uygulama çevrimdışı
+                (offline) veri depolama desteğine sahiptir.
             </p>
 
             <!-- Native PWA One-Click Banner (shown when browser supports direct install) -->
-            <div id="native-pwa-banner" class="hidden" style="background: linear-gradient(135deg, rgba(249,115,22,0.12), rgba(139,92,246,0.12)); border: 1.5px solid var(--neon-orange); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div id="native-pwa-banner" class="hidden"
+                style="background: linear-gradient(135deg, rgba(249,115,22,0.12), rgba(139,92,246,0.12)); border: 1.5px solid var(--neon-orange); border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
                 <div>
-                    <strong style="color:var(--text-primary); font-size:0.95rem;"><i class="fa-solid fa-bolt text-neon-orange"></i> Hızlı Kurulum Hazır!</strong>
-                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">Tarayıcınız doğrudan ana ekrana / masaüstüne uygulama kurulumunu destekliyor.</p>
+                    <strong style="color:var(--text-primary); font-size:0.95rem;"><i
+                            class="fa-solid fa-bolt text-neon-orange"></i> Hızlı Kurulum Hazır!</strong>
+                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">Tarayıcınız doğrudan ana
+                        ekrana / masaüstüne uygulama kurulumunu destekliyor.</p>
                 </div>
                 <button type="button" class="btn btn-primary btn-glow btn-sm" id="btn-trigger-native-pwa">
                     <i class="fa-solid fa-circle-down"></i> Şimdi Kur (Tek Tık)
@@ -1214,22 +1389,24 @@
             <!-- 4 Platform Grid -->
             <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin-bottom:18px;">
                 <!-- Windows -->
-                <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                <div
+                    style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                             <i class="fa-brands fa-windows" style="font-size:1.6rem; color:#0ea5e9;"></i>
                             <div>
                                 <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">Windows (PC)</h4>
-                                <span style="font-size:0.72rem; color:var(--text-secondary);">Windows 10 / 11 Masaüstü Uygulaması</span>
+                                <span style="font-size:0.72rem; color:var(--text-secondary);">Windows 10 / 11 Masaüstü
+                                    Uygulaması</span>
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            Çerçevesiz masaüstü uygulama başlatıcısı (<code>.bat</code>) veya tek dosya taşınabilir uygulama olarak indirin.
+                            Kurulum gerektirmeyen gerçek Windows masaüstü uygulamasını (<code>.exe</code>) veya taşınabilir uygulamayı indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/windows" download="AICoaching_Windows_App.bat" class="btn btn-primary btn-sm btn-dl-action" data-platform="windows" style="text-decoration:none; width:100%;">
-                            <i class="fa-brands fa-windows"></i> Windows Uygulamasını İndir (.bat)
+                        <a href="/api/download/windows" download="AICoaching_Windows.exe" class="btn btn-primary btn-sm btn-dl-action" data-platform="windows" style="text-decoration:none; width:100%;">
+                            <i class="fa-brands fa-windows"></i> Windows Uygulamasını İndir (.exe)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_Portable_App.html" class="btn btn-secondary btn-sm btn-dl-action" data-platform="standalone" style="text-decoration:none; width:100%;">
                             <i class="fa-solid fa-box-archive"></i> Taşınabilir Tek Dosya İndir (.html)
@@ -1238,46 +1415,51 @@
                 </div>
 
                 <!-- Android -->
-                <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                <div
+                    style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                             <i class="fa-brands fa-android" style="font-size:1.6rem; color:#10b981;"></i>
                             <div>
                                 <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">Android</h4>
-                                <span style="font-size:0.72rem; color:var(--text-secondary);">Telefon & Tablet Uygulaması</span>
+                                <span style="font-size:0.72rem; color:var(--text-secondary);">Telefon & Tablet
+                                    Uygulaması</span>
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            Android cihazınıza tam ekran uygulama olarak kurun veya çevrimdışı çalışan uygulama paketini indirin.
+                            Android cihazınıza tam ekran uygulama olarak kurun veya çevrimdışı çalışan uygulama paketini (<code>.zip</code>) indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/android" download="AICoaching_Android_App.html" class="btn btn-primary btn-sm btn-dl-action" data-platform="android" style="text-decoration:none; width:100%; background:#10b981;">
-                            <i class="fa-brands fa-android"></i> Android Uygulamasını İndir
+                        <a href="/api/download/android" download="AICoaching_Android.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="android" style="text-decoration:none; width:100%; background:#10b981;">
+                            <i class="fa-brands fa-android"></i> Android Paketini İndir (.zip)
                         </a>
-                        <button type="button" class="btn btn-secondary btn-sm" id="btn-android-pwa-guide" style="width:100%;">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-android-pwa-guide"
+                            style="width:100%;">
                             <i class="fa-solid fa-mobile-screen-button"></i> Ana Ekrana Kurulum (PWA)
                         </button>
                     </div>
                 </div>
 
                 <!-- iOS (iPhone / iPad) -->
-                <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                <div
+                    style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                             <i class="fa-brands fa-apple" style="font-size:1.6rem; color:#0f172a;"></i>
                             <div>
-                                <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">iOS (iPhone & iPad)</h4>
-                                <span style="font-size:0.72rem; color:var(--text-secondary);">iOS WebClip Profili & Taşınabilir App</span>
+                                <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">iOS (iPhone &
+                                    iPad)</h4>
+                                <span style="font-size:0.72rem; color:var(--text-secondary);">iOS Uygulama Paketi</span>
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            iOS kurulum profilini (<code>.mobileconfig</code>) indirerek veya Safari'den Ana Ekrana ekleyerek tam ekran kullanın.
+                            iOS kurulum profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi (<code>.zip</code>) indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/ios" download="AICoaching_iOS.mobileconfig" class="btn btn-primary btn-sm btn-dl-action" data-platform="ios" style="text-decoration:none; width:100%; background:#0f172a;">
-                            <i class="fa-brands fa-apple"></i> iOS Profilini İndir (.mobileconfig)
+                        <a href="/api/download/ios" download="AICoaching_iOS.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="ios" style="text-decoration:none; width:100%; background:#0f172a;">
+                            <i class="fa-brands fa-apple"></i> iOS Paketini İndir (.zip)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_iOS_App.html" class="btn btn-secondary btn-sm btn-dl-action" data-platform="standalone" style="text-decoration:none; width:100%;">
                             <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama İndir
@@ -1286,22 +1468,25 @@
                 </div>
 
                 <!-- macOS -->
-                <div style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                <div
+                    style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
                     <div>
                         <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                             <i class="fa-solid fa-laptop" style="font-size:1.5rem; color:#8b5cf6;"></i>
                             <div>
-                                <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">macOS (MacBook / iMac)</h4>
-                                <span style="font-size:0.72rem; color:var(--text-secondary);">macOS Masaüstü Uygulaması</span>
+                                <h4 style="font-family:var(--font-header); font-size:1rem; margin:0;">macOS (MacBook /
+                                    iMac)</h4>
+                                <span style="font-size:0.72rem; color:var(--text-secondary);">macOS Masaüstü
+                                    Uygulaması</span>
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            macOS için çift tıklanabilir <code>.command</code> başlatıcısını veya bağımsız uygulama dosyasını indirin.
+                            macOS için <code>AICoaching.app</code> uygulama paketini (<code>.zip</code>) veya bağımsız uygulama dosyasını indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/mac" download="AICoaching_Mac_App.command" class="btn btn-primary btn-sm btn-dl-action" data-platform="mac" style="text-decoration:none; width:100%; background:#8b5cf6;">
-                            <i class="fa-brands fa-apple"></i> Mac Uygulamasını İndir (.command)
+                        <a href="/api/download/mac" download="AICoaching_macOS.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="mac" style="text-decoration:none; width:100%; background:#8b5cf6;">
+                            <i class="fa-brands fa-apple"></i> Mac Paketini İndir (.zip)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_Mac_App.html" class="btn btn-secondary btn-sm btn-dl-action" data-platform="standalone" style="text-decoration:none; width:100%;">
                             <i class="fa-solid fa-box-archive"></i> Mac Taşınabilir Uygulama (.html)
@@ -1311,13 +1496,16 @@
             </div>
 
             <!-- Shareable Direct Download Link & Local Network Info -->
-            <div style="background:rgba(15,23,42,0.03); border:1px solid var(--border-color); border-radius:12px; padding:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div
+                style="background:rgba(15,23,42,0.03); border:1px solid var(--border-color); border-radius:12px; padding:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
                 <div style="flex:1; min-width:220px;">
-                    <span style="font-size:0.75rem; font-weight:700; color:var(--neon-orange); text-transform:uppercase; display:block;">
+                    <span
+                        style="font-size:0.75rem; font-weight:700; color:var(--neon-orange); text-transform:uppercase; display:block;">
                         <i class="fa-solid fa-link"></i> Doğrudan İndirme Sayfası Linki (Tüm Cihazlar)
                     </span>
                     <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                        <input type="text" id="share-download-link-input" readonly value="http://localhost:8090/indir" style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:#fff; font-size:0.82rem; font-weight:600; color:var(--text-primary);">
+                        <input type="text" id="share-download-link-input" readonly value="http://localhost:8090/indir"
+                            style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid var(--border-color); background:#fff; font-size:0.82rem; font-weight:600; color:var(--text-primary);">
                         <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-download-link">
                             <i class="fa-solid fa-copy"></i> Kopyala
                         </button>
@@ -1336,4 +1524,5 @@
     <!-- Application Script -->
     <script src="app.js"></script>
 </body>
+
 </html>
