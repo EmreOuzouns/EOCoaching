@@ -1230,6 +1230,12 @@ if USE_FASTAPI:
             headers={"Content-Disposition": f'attachment; filename="{fname}"'}
         )
 
+    @app.get("/indir")
+    def download_page():
+        dl_path = os.path.join(BASE_DIR, "download.html")
+        with open(dl_path, "rb") as f:
+            return Response(content=f.read(), media_type="text/html; charset=utf-8")
+
     app.mount("/", StaticFiles(directory=BASE_DIR, html=True), name="static")
 
 
