@@ -520,6 +520,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initTabNavigation();
     initDateControls();
     initDomsSelector();
+    initPWAInstall();
     await initLoginSession();
     initNutritionForm();
     initWaterControls();
@@ -536,7 +537,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // PWA & Onboarding Init
     registerServiceWorker();
-    initPWAInstall();
     checkAndGeneratePWAIcons();
     initOnboardingQuiz();
 });
@@ -3663,41 +3663,7 @@ function initPWAInstall() {
                 const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
-                a.download = link.getAttribute("download") || "AICoaching_Portable_App.html";
-                a.click();
-                showToast("📥 Uygulama dosyası indirildi!");
-            } else {
-                showToast("📥 İndirme başlatıldı!");
-            }
-        });
-    });
-
-    androidGuideBtn?.addEventListener("click", async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            return;
-        }
-        alert("Android Ana Ekrana Kurulum:\n1. 'Android Uygulamasını İndir' butonuna tıklayarak taşınabilir uygulamayı cihazınıza indirin VEYA\n2. Chrome tarayıcınızın sağ üst köşesindeki (⋮) menüsünden 'Uygulamayı Yükle / Ana ekrana ekle' seçeneğine dokunun.");
-    });
-
-    copyLinkBtn?.addEventListener("click", () => {
-        if (!shareLinkInput) return;
-        navigator.clipboard?.writeText(shareLinkInput.value);
-        showToast("🔗 İndirme linki panoya kopyalandı!");
-    });
-
-    // When running in standalone mode (file://), package and download the current document directly
-    document.querySelectorAll(".btn-dl-action").forEach(link => {
-        link.addEventListener("click", (e) => {
-            if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
-                e.preventDefault();
-                const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-                const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-                const a = document.createElement("a");
-                a.href = URL.createObjectURL(blob);
-                a.download = link.getAttribute("download") || "AICoaching_Portable_App.html";
+                a.download = link.getAttribute("download") || "EOCoaching_Portable_App.html";
                 a.click();
                 showToast("📥 Uygulama dosyası indirildi!");
             } else {
@@ -3714,7 +3680,7 @@ function initPWAInstall() {
 }
 
 async function checkAndGeneratePWAIcons() {
-    if (localStorage.getItem("pwa_icons_generated_v3")) {
+    if (localStorage.getItem("pwa_icons_generated_v4")) {
         return;
     }
 
@@ -3729,41 +3695,42 @@ async function checkAndGeneratePWAIcons() {
         const c_y = 256 * scale;
         const r = 230 * scale;
 
-        // Background Orange
+        // Background Deep Slate Circle
         ctx.beginPath();
         ctx.arc(c_x, c_y, r, 0, 2 * Math.PI);
-        ctx.fillStyle = "#f97316";
+        ctx.fillStyle = "#0f172a";
         ctx.fill();
 
-        // Inner white circular border
+        // Inner yellow circular border
         ctx.beginPath();
-        ctx.arc(c_x, c_y, 205 * scale, 0, 2 * Math.PI);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.45)";
-        ctx.lineWidth = Math.max(1, 6 * scale);
+        ctx.arc(c_x, c_y, 208 * scale, 0, 2 * Math.PI);
+        ctx.strokeStyle = "rgba(250, 204, 21, 0.82)";
+        ctx.lineWidth = Math.max(2, 8 * scale);
         ctx.stroke();
 
-        // Dumbbell Bar
-        const bar_w = 260 * scale;
-        const bar_h = 32 * scale;
-        ctx.fillStyle = "#ffffff";
+        // Yellow Dumbbell Bar
+        const bar_w = 250 * scale;
+        const bar_h = 30 * scale;
+        ctx.fillStyle = "#facc15";
         ctx.fillRect(c_x - bar_w / 2, c_y - bar_h / 2, bar_w, bar_h);
 
         // Inner Plates
-        const ip_w = 24 * scale;
-        const ip_h = 160 * scale;
+        const ip_w = 30 * scale;
+        const ip_h = 156 * scale;
         ctx.fillRect(c_x - bar_w / 2 - ip_w, c_y - ip_h / 2, ip_w, ip_h);
         ctx.fillRect(c_x + bar_w / 2, c_y - ip_h / 2, ip_w, ip_h);
 
         // Outer Plates
-        const op_w = 32 * scale;
-        const op_h = 220 * scale;
-        ctx.fillRect(c_x - bar_w / 2 - ip_w - 12 * scale - op_w, c_y - op_h / 2, op_w, op_h);
-        ctx.fillRect(c_x + bar_w / 2 + ip_w + 12 * scale, c_y - op_h / 2, op_w, op_h);
+        const op_w = 34 * scale;
+        const op_h = 216 * scale;
+        ctx.fillStyle = "#eab308";
+        ctx.fillRect(c_x - bar_w / 2 - ip_w - 10 * scale - op_w, c_y - op_h / 2, op_w, op_h);
+        ctx.fillRect(c_x + bar_w / 2 + ip_w + 10 * scale, c_y - op_h / 2, op_w, op_h);
 
         // Grips
-        const grip_w = 120 * scale;
-        const grip_h = 42 * scale;
-        ctx.fillStyle = "#f1f5f9";
+        const grip_w = 110 * scale;
+        const grip_h = 40 * scale;
+        ctx.fillStyle = "#eab308";
         ctx.fillRect(c_x - grip_w / 2, c_y - grip_h / 2, grip_w, grip_h);
     }
 
@@ -3783,7 +3750,7 @@ async function checkAndGeneratePWAIcons() {
                 body: dataUrl
             });
         }
-        localStorage.setItem("pwa_icons_generated_v3", "true");
+        localStorage.setItem("pwa_icons_generated_v4", "true");
         console.log("PWA Icons generated and uploaded successfully!");
     } catch (e) {
         console.error("Error generating/uploading PWA icons:", e);
