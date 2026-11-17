@@ -1,8 +1,7 @@
-const CACHE_NAME = "eocoach-cache-v17";
+const CACHE_NAME = "eocoach-cache-v18";
 const ASSETS = [
   "/",
   "/index.html",
-  "/download.html",
   "/style.css",
   "/app.js",
   "/manifest.json",
@@ -14,7 +13,9 @@ const ASSETS = [
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
+      return Promise.all(
+        ASSETS.map((url) => cache.add(url).catch(() => null))
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -34,20 +35,19 @@ self.addEventListener("activate", (e) => {
   );
 });
 
-// Fetch Event (Network First or Cache Fallback)
+// Fetch Event (Network First with Cache Fallback, GET & same-origin only)
 self.addEventListener("fetch", (e) => {
-  // Do not intercept API requests
-  if (e.request.url.includes("/api/")) {
-    return;
-  }
+  if (e.request.method !== "GET") return;
+  if (!e.request.url.startsWith(self.location.origin)) return;
+  if (e.request.url.includes("/api/")) return;
 
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        if (res.status === 200) {
+        if (res && res.status === 200) {
           const resClone = res.clone();
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(e.request, resClone);
+            cache.put(e.request, resClone).catch(() => {});
           });
         }
         return res;

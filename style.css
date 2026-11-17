@@ -1455,21 +1455,53 @@ form {
     }
     
     .main-content {
-        padding: 16px;
+        padding: 12px;
+        width: 100%;
+        overflow-x: hidden;
     }
-    
+
+    .overlay {
+        padding: 10px;
+        align-items: flex-start;
+        overflow-y: auto;
+    }
+
+    .onboarding-card,
+    .modal-card {
+        padding: 18px;
+        margin: 8px auto;
+        max-height: none;
+    }
+
+    .glass-card {
+        padding: 14px;
+    }
+
     .top-header {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         align-items: stretch;
     }
-    
+
     .date-selector {
         justify-content: center;
+        flex-wrap: wrap;
     }
-    
+
     .quick-stats {
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .social-table th,
+    .social-table td {
+        padding: 8px 6px;
+        font-size: 0.78rem;
+    }
+
+    #social-calendar-grid {
+        gap: 3px !important;
     }
     
     .grid-layout {
