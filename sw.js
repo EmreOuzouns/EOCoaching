@@ -1,4 +1,4 @@
-const CACHE_NAME = "eocoach-cache-v7";
+const CACHE_NAME = "eocoach-cache-v8";
 const ASSETS = [
   "/",
   "/index.html",
@@ -40,7 +40,7 @@ self.addEventListener("fetch", (e) => {
   if (e.request.url.includes("/api/")) {
     return;
   }
-  
+
   e.respondWith(
     fetch(e.request)
       .then((res) => {

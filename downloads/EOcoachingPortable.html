@@ -6858,11 +6858,23 @@ function initPWAInstall() {
         showToast("🔗 İndirme linki panoya kopyalandı!");
     });
 
-    // When running in standalone mode (file://), package and download the current document directly
+    // When running in standalone mode (file://), package HTML for standalone links or point platform links to GitHub releases
+    const GITHUB_DL_MAP = {
+        windows: "https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingWindows.exe",
+        android: "https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingAndroid.zip",
+        ios: "https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingiOS.zip",
+        mac: "https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingmacOS.zip"
+    };
     document.querySelectorAll(".btn-dl-action").forEach(link => {
         link.addEventListener("click", (e) => {
+            const plat = (link.getAttribute("data-platform") || "").toLowerCase();
             if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
                 e.preventDefault();
+                if (plat && GITHUB_DL_MAP[plat]) {
+                    window.open(GITHUB_DL_MAP[plat], "_blank", "noopener");
+                    showToast("📥 İndirme başlatıldı!");
+                    return;
+                }
                 const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
                 const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
                 const a = document.createElement("a");

@@ -55,11 +55,12 @@ The AI Coach reads your current profile, targets, calorie intake, sleep, and wor
 
 Pre-built packages are available in the `downloads/` folder and directly via the links below:
 
-- **Windows (.exe Desktop App):** [Download EOCoaching_Windows.exe](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOCoaching_Windows.exe)
-- **Windows (.zip Bundle):** [Download EOCoaching_Windows.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOCoaching_Windows.zip)
-- **Android (.zip Package):** [Download EOCoaching_Android.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOCoaching_Android.zip)
-- **iOS (.zip Package with WebClip Profile):** [Download EOCoaching_iOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOCoaching_iOS.zip)
-- **macOS (.zip App Bundle):** [Download EOCoaching_macOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOCoaching_macOS.zip)
+- **Windows (.exe Desktop App):** [Download EOcoachingWindows.exe](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingWindows.exe)
+- **Windows (.zip Bundle):** [Download EOcoachingWindows.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingWindows.zip)
+- **Android (.zip Package):** [Download EOcoachingAndroid.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingAndroid.zip)
+- **iOS (.zip Package with WebClip Profile):** [Download EOcoachingiOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingiOS.zip)
+- **macOS (.zip App Bundle):** [Download EOcoachingmacOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingmacOS.zip)
+- **Universal Portable App (.html):** [Download EOcoachingPortable.html](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingPortable.html)
 
 ---
 
@@ -78,7 +79,7 @@ Pre-built packages are available in the `downloads/` folder and directly via the
 ## How to Run
 
 ### Option 1: Standalone (No Setup)
-Download `EOCoaching_Windows.exe` (or extract the `.zip` for your platform) and open it directly. All data is saved locally in your browser/app storage.
+Download `EOcoachingWindows.exe` (or extract the `.zip` for your platform) and open it directly. All data is saved locally in your browser/app storage.
 
 ### Option 2: Local Python Server (SQLite)
 1. Clone the repository:
