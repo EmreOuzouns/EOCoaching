@@ -348,9 +348,15 @@
             return nativeFetch(input, init);
         }
 
-        // Use local storage DB directly when running as a standalone portable app (file:// or AICOACHING_STANDALONE_MODE)
+        const CLOUD_SERVER_URL = "https://eocoaching-production.up.railway.app";
+        // Standalone portable app: connect to 7/24 Railway cloud server when online, fallback to LocalStorage offline
         if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
-            return handleOfflineAPI(urlStr, init);
+            try {
+                const targetUrl = urlStr.startsWith("/") ? (CLOUD_SERVER_URL + urlStr) : urlStr;
+                return await nativeFetch(targetUrl, init);
+            } catch (err) {
+                return handleOfflineAPI(urlStr, init);
+            }
         }
 
         try {
@@ -728,9 +734,15 @@
             return nativeFetch(input, init);
         }
 
-        // Use local storage DB directly when running as a standalone portable app (file:// or AICOACHING_STANDALONE_MODE)
+        const CLOUD_SERVER_URL = "https://eocoaching-production.up.railway.app";
+        // Standalone portable app: connect to 7/24 Railway cloud server when online, fallback to LocalStorage offline
         if (window.location.protocol === "file:" || window.AICOACHING_STANDALONE_MODE || window.AURA_STANDALONE_MODE) {
-            return handleOfflineAPI(urlStr, init);
+            try {
+                const targetUrl = urlStr.startsWith("/") ? (CLOUD_SERVER_URL + urlStr) : urlStr;
+                return await nativeFetch(targetUrl, init);
+            } catch (err) {
+                return handleOfflineAPI(urlStr, init);
+            }
         }
 
         try {
