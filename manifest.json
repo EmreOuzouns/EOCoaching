@@ -1,22 +1,26 @@
 {
+  "id": "/",
   "name": "EOCoaching — AI Fitness & Nutrition Coach",
   "short_name": "EOCoaching",
   "description": "AI-powered personal fitness, progressive overload, nutrition, and daily routine coach.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f5f7fb",
-  "theme_color": "#f97316",
+  "theme_color": "#0f172a",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/icon-512.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "512x512",
+      "purpose": "any maskable"
     }
   ]
 }
