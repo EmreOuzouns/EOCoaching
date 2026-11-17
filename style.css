@@ -585,14 +585,41 @@ p, span, label, input, select, textarea, td, th {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .onboarding-card {
     max-width: 550px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto !important;
     background: #ffffff;
     border: 1px solid rgba(15, 23, 42, 0.05);
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.55) rgba(15, 23, 42, 0.06);
+}
+
+.onboarding-card::-webkit-scrollbar,
+.modal-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-track,
+.modal-card::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.05);
+    border-radius: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-thumb,
+.modal-card::-webkit-scrollbar-thumb {
+    background: rgba(249, 115, 22, 0.55);
+    border-radius: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-thumb:hover,
+.modal-card::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-orange);
 }
 
 .onboarding-card h2 {
@@ -1356,13 +1383,18 @@ form {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .modal-card {
     max-width: 400px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto !important;
     background: #ffffff;
     box-shadow: 0 15px 40px rgba(15, 23, 42, 0.15);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.55) rgba(15, 23, 42, 0.06);
 }
 
 .modal-card h3 {

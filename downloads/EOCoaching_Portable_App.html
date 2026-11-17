@@ -616,14 +616,41 @@ p, span, label, input, select, textarea, td, th {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .onboarding-card {
     max-width: 550px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto !important;
     background: #ffffff;
     border: 1px solid rgba(15, 23, 42, 0.05);
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.55) rgba(15, 23, 42, 0.06);
+}
+
+.onboarding-card::-webkit-scrollbar,
+.modal-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-track,
+.modal-card::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.05);
+    border-radius: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-thumb,
+.modal-card::-webkit-scrollbar-thumb {
+    background: rgba(249, 115, 22, 0.55);
+    border-radius: 8px;
+}
+
+.onboarding-card::-webkit-scrollbar-thumb:hover,
+.modal-card::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-orange);
 }
 
 .onboarding-card h2 {
@@ -1387,13 +1414,18 @@ form {
     align-items: center;
     justify-content: center;
     padding: 20px;
+    overflow-y: auto;
 }
 
 .modal-card {
     max-width: 400px;
     width: 100%;
+    max-height: 90vh;
+    overflow-y: auto !important;
     background: #ffffff;
     box-shadow: 0 15px 40px rgba(15, 23, 42, 0.15);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(249, 115, 22, 0.55) rgba(15, 23, 42, 0.06);
 }
 
 .modal-card h3 {
@@ -1923,15 +1955,21 @@ form {
                             <i class="fa-solid fa-key text-neon-orange"></i> Kendi Gemini API Anahtarınız
                         </h4>
                         <p class="subtitle" style="margin-bottom: 14px;">
-                            Her kullanıcı uygulamadaki yapay zeka özelliklerini (sohbet, program üretimi, fotoğraflı besin analizi) <strong>kendi ücretsiz Gemini API anahtarı</strong> ile kullanır. Anahtarınız yalnızca sizin cihazınızda saklanır ve başka kimseyle paylaşılmaz.
+                            Her kullanıcı uygulamadaki yapay zeka özelliklerini (sohbet, program üretimi, fotoğraflı
+                            besin analizi) <strong>kendi ücretsiz Gemini API anahtarı</strong> ile kullanır. Anahtarınız
+                            yalnızca sizin cihazınızda saklanır ve başka kimseyle paylaşılmaz.
                         </p>
 
-                        <div style="background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                        <div
+                            style="background: rgba(249,115,22,0.05); border: 1px solid rgba(249,115,22,0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
                             <div style="font-size: 0.8rem; color: var(--text-secondary);">
-                                <strong style="color: var(--text-primary); display:block;">API Anahtarınız Yok mu?</strong>
+                                <strong style="color: var(--text-primary); display:block;">API Anahtarınız Yok
+                                    mu?</strong>
                                 Google AI Studio üzerinden 1 dakikada ücretsiz anahtar oluşturabilirsiniz.
                             </div>
-                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="text-decoration:none; border-color: var(--neon-orange); color: var(--neon-orange);">
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                                class="btn btn-secondary btn-sm"
+                                style="text-decoration:none; border-color: var(--neon-orange); color: var(--neon-orange);">
                                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Ücretsiz API Key Al
                             </a>
                         </div>
@@ -1941,15 +1979,19 @@ form {
                             <div class="password-input-wrapper">
                                 <input type="password" id="ob-api-key"
                                     placeholder="AIzaSy... (Boş bırakırsanız standart hazır şablonlar kurulur)">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-ob-key" title="Göster / Gizle">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-ob-key"
+                                    title="Göster / Gizle">
                                     <i class="fa-solid fa-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-test-ob-key" title="Anahtarı Test Et">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-test-ob-key"
+                                    title="Anahtarı Test Et">
                                     <i class="fa-solid fa-vial"></i> Test Et
                                 </button>
                             </div>
-                            <p id="ob-api-key-status" class="subtitle" style="font-size:0.75rem; margin-top:6px; margin-bottom:0;">
-                                İsterseniz boş bırakıp devam edebilirsiniz; daha sonra Ayarlar sekmesinden de ekleyebilirsiniz.
+                            <p id="ob-api-key-status" class="subtitle"
+                                style="font-size:0.75rem; margin-top:6px; margin-bottom:0;">
+                                İsterseniz boş bırakıp devam edebilirsiniz; daha sonra Ayarlar sekmesinden de
+                                ekleyebilirsiniz.
                             </p>
                         </div>
                     </div>
@@ -3930,6 +3972,9 @@ function initOnboardingQuiz() {
             nextBtn.classList.remove("hidden");
             submitBtn.classList.add("hidden");
         }
+
+        const quizCard = document.querySelector("#onboarding-overlay .onboarding-card");
+        if (quizCard) quizCard.scrollTop = 0;
     }
 
     nextBtn.addEventListener("click", () => {

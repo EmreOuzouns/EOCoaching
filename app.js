@@ -772,6 +772,9 @@ function initOnboardingQuiz() {
             nextBtn.classList.remove("hidden");
             submitBtn.classList.add("hidden");
         }
+
+        const quizCard = document.querySelector("#onboarding-overlay .onboarding-card");
+        if (quizCard) quizCard.scrollTop = 0;
     }
 
     nextBtn.addEventListener("click", () => {
