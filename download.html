@@ -71,11 +71,8 @@
             </p>
 
             <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-                <a href="/" class="btn btn-secondary">
+                <a href="/" class="btn btn-primary btn-glow">
                     <i class="fa-solid fa-play"></i> Web Uygulamasını Aç
-                </a>
-                <a href="/api/download/standalone" download="EOcoachingPortable.html" class="btn btn-primary btn-glow">
-                    <i class="fa-solid fa-bolt"></i> Evrensel Tek Dosya Uygulamayı İndir (Tüm Cihazlar)
                 </a>
                 <button id="pwa-direct-btn" class="btn btn-success hidden">
                     <i class="fa-solid fa-mobile-screen"></i> Cihaza Doğrudan Kur (PWA)
@@ -98,15 +95,12 @@
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        Windows masaüstünde doğrudan çalışan gerçek masaüstü uygulamasını (<code>.exe</code>) veya çevrimdışı taşınabilir sürümü indirin.
+                        Windows masaüstünde doğrudan çalışan gerçek masaüstü uygulamasını (<code>.exe</code>) indirin.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <a href="/api/download/windows" download="EOcoachingWindows.exe" class="btn btn-primary" style="text-decoration:none; background:#0ea5e9;">
-                        <i class="fa-solid fa-download"></i> Windows İçin İndir (.exe Uygulama)
-                    </a>
-                    <a href="/api/download/standalone" download="EOcoachingWindows.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
-                        <i class="fa-solid fa-file-code"></i> Taşınabilir Sürümü İndir (Çevrimdışı Çalışır)
+                        <i class="fa-solid fa-download"></i> Windows İçin İndir (.exe)
                     </a>
                 </div>
             </div>
@@ -125,18 +119,12 @@
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        Android cihazınıza indirip doğrudan açabilir veya Chrome menüsünden <strong>"Uygulamayı Yükle / Ana Ekrana Ekle"</strong> seçeneğiyle tam ekran kullanabilirsiniz.
+                        Chrome'dan açıp ana ekranınıza sarı dambıl logolu tam ekran Android uygulaması olarak kurun.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <a href="https://eocoaching-production.up.railway.app" target="_blank" rel="noopener" class="btn btn-primary" style="text-decoration:none; background:#10b981;">
-                        <i class="fa-brands fa-android"></i> Android Uygulamasını Aç & Ana Ekrana Kur
-                    </a>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="installPWAOrGuide('android')">
-                        <i class="fa-solid fa-mobile-screen-button"></i> Ana Ekrana Uygulama Olarak Ekle
-                    </button>
-                    <a href="/api/download/android" download="EOcoachingAndroid.zip" class="btn btn-secondary btn-sm" style="text-decoration:none; font-size:0.78rem;">
-                        <i class="fa-solid fa-box-archive"></i> Çevrimdışı Paket İndir (.zip)
+                        <i class="fa-brands fa-android"></i> Android Uygulamasını Aç & Kur
                     </a>
                 </div>
             </div>
@@ -149,21 +137,18 @@
                             <i class="fa-brands fa-apple" style="font-size:2.2rem; color:#0f172a;"></i>
                             <div>
                                 <h3 style="font-family:var(--font-header); font-size:1.2rem;">iOS (iPhone & iPad)</h3>
-                                <span style="font-size:0.8rem; color:var(--text-secondary);">iOS 14+ Uygulama Paketi</span>
+                                <span style="font-size:0.8rem; color:var(--text-secondary);">iOS 14+ Uygulama</span>
                             </div>
                         </div>
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        iOS Ana Ekran uygulama profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi (<code>.zip</code>) indirin.
+                        Tek tıkla iOS Ana Ekran profilini kurarak sarı dambıl logolu tam ekran iOS uygulaması olarak kullanın.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <a href="/api/download/ios" download="EOcoachingiOS.zip" class="btn btn-primary" style="text-decoration:none; background:#0f172a;">
-                        <i class="fa-solid fa-download"></i> iOS İçin İndir (.zip Paket)
-                    </a>
-                    <a href="/api/download/standalone" download="EOcoachingiOS.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
-                        <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama İndir (.html)
+                    <a href="/api/download/ios-profile" download="EOcoachingiOS.mobileconfig" class="btn btn-primary" style="text-decoration:none; background:#0f172a;">
+                        <i class="fa-brands fa-apple"></i> iOS Ana Ekrana Kur
                     </a>
                 </div>
             </div>
@@ -182,15 +167,12 @@
                         <span class="badge-rec">Cihazınız İçin Önerilen</span>
                     </div>
                     <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:12px; line-height:1.5;">
-                        macOS üzerinde çalışan <code>EOcoaching.app</code> uygulama paketini (<code>.zip</code>) veya tek dosya taşınabilir Mac uygulamasını indirin.
+                        macOS üzerinde çalışan <code>EOcoaching.app</code> masaüstü uygulamasını indirin.
                     </p>
                 </div>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <a href="/api/download/mac" download="EOcoachingmacOS.zip" class="btn btn-primary" style="text-decoration:none; background:#8b5cf6;">
-                        <i class="fa-solid fa-download"></i> Mac İçin İndir (.zip Paket)
-                    </a>
-                    <a href="/api/download/standalone" download="EOcoachingmacOS.html" class="btn btn-secondary btn-sm" style="text-decoration:none;">
-                        <i class="fa-solid fa-box-archive"></i> Mac Taşınabilir Uygulama İndir (.html)
+                        <i class="fa-solid fa-download"></i> Mac İçin İndir (.zip)
                     </a>
                 </div>
             </div>

@@ -51,18 +51,10 @@ The AI Coach reads your current profile, targets, calorie intake, sleep, and wor
 
 ---
 
-## Downloads (Windows / Android / iOS / macOS)
+## Live App & Downloads (Windows / Android / iOS / macOS)
 
 - **7/24 Live Web App:** [https://eocoaching-production.up.railway.app](https://eocoaching-production.up.railway.app)
-
-Pre-built packages are available in the `downloads/` folder and directly via the links below:
-
-- **Windows (.exe Desktop App):** [Download EOcoachingWindows.exe](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingWindows.exe)
-- **Windows (.zip Bundle):** [Download EOcoachingWindows.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingWindows.zip)
-- **Android (.zip Package):** [Download EOcoachingAndroid.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingAndroid.zip)
-- **iOS (.zip Package with WebClip Profile):** [Download EOcoachingiOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingiOS.zip)
-- **macOS (.zip App Bundle):** [Download EOcoachingmacOS.zip](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingmacOS.zip)
-- **Universal Portable App (.html):** [Download EOcoachingPortable.html](https://github.com/EmreOuzouns/EOCoaching/raw/main/downloads/EOcoachingPortable.html)
+- **Download Center (All Platforms):** [https://eocoaching-production.up.railway.app/indir](https://eocoaching-production.up.railway.app/indir)
 
 ---
 
