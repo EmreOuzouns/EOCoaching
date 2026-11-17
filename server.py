@@ -1361,48 +1361,7 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             return super().do_GET()
 
         try:
-            if path == "/api/auth/register":
-                data = self._read_json()
-                res, code = db_auth_register(data)
-                return self._send_json(res, code)
-
-            elif path == "/api/auth/login":
-                data = self._read_json()
-                res, code = db_auth_login(data)
-                return self._send_json(res, code)
-
-            elif path == "/api/auth/avatar":
-                data = self._read_json()
-                return self._send_json(db_auth_avatar(data))
-
-            elif path == "/api/auth/heartbeat":
-                data = self._read_json()
-                return self._send_json(db_auth_heartbeat(data))
-
-            elif path == "/api/auth/offline":
-                data = self._read_json()
-                return self._send_json(db_auth_offline(data))
-
-            elif path == "/api/social/friends/add":
-                data = self._read_json()
-                res, code = db_add_friend(data, user)
-                return self._send_json(res, code)
-
-            elif path == "/api/social/friends/remove":
-                data = self._read_json()
-                return self._send_json(db_remove_friend(data, user))
-
-            elif path == "/api/social/dm":
-                data = self._read_json()
-                res, code = db_send_dm(data, user)
-                return self._send_json(res, code)
-
-            elif path == "/api/auth/delete-user":
-                data = self._read_json()
-                res, code = db_auth_delete_user(data)
-                return self._send_json(res, code)
-
-            elif path == "/api/profile":
+            if path == "/api/profile":
                 prof = db_get_profile(user)
                 if prof is None:
                     return self._send_json({"detail": "Profile not found"}, 404)
