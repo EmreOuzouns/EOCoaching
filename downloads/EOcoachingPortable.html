@@ -3179,6 +3179,27 @@ form {
         </div>
     </div>
 
+    <!-- Friend Instant Chat (DM) Modal -->
+    <div id="social-dm-modal" class="modal-overlay hidden" style="z-index: 9998;">
+        <div class="glass-card modal-card fade-in" style="max-width: 480px; width: 100%; display:flex; flex-direction:column; max-height: 85vh;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span id="dm-modal-avatar"></span>
+                    <div>
+                        <strong id="dm-modal-name" style="color:var(--text-primary); display:block;">Arkadaş Sohbeti</strong>
+                        <span id="dm-modal-status" style="font-size:0.75rem; color:var(--text-muted);">-</span>
+                    </div>
+                </div>
+                <button type="button" class="btn-icon" id="btn-close-dm-modal" style="font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="dm-messages-box" style="flex:1; min-height:240px; max-height:48vh; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding:8px; background:rgba(15,23,42,0.03); border-radius:10px; margin-bottom:10px;"></div>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="dm-message-input" placeholder="Mesajını yaz..." style="flex:1; padding:10px 12px; border-radius:10px;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-send-dm"><i class="fa-solid fa-paper-plane"></i> Gönder</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Social Day Detail Modal -->
     <div id="social-day-modal" class="modal-overlay hidden" style="z-index: 9998;">
         <div class="glass-card modal-card fade-in"
@@ -3735,6 +3756,25 @@ window.AICOACHING_STANDALONE_MODE = true;
             return jsonResponse({ month, days });
         }
 
+        if (path === "/api/social/dm") {
+            if (!db.dms) db.dms = [];
+            const peer = (u.searchParams.get("peer") || bodyData.receiver || "").toLowerCase();
+            if (method === "GET") {
+                const afterId = parseInt(u.searchParams.get("after_id") || "0", 10);
+                return jsonResponse(db.dms.filter(m =>
+                    ((m.sender === user && m.receiver === peer) || (m.sender === peer && m.receiver === user)) && m.id > afterId
+                ).slice(-100));
+            }
+            if (method === "POST") {
+                const msg = (bodyData.message || "").trim();
+                if (!peer || !msg) return jsonResponse({ error: "Mesaj boş olamaz." }, 400);
+                const item = { id: Date.now(), sender: user, receiver: peer, message: msg, created_at: new Date().toISOString() };
+                db.dms.push(item);
+                saveLocalDB(db);
+                return jsonResponse({ status: "ok", ...item });
+            }
+        }
+
         if (path === "/api/network-info") {
             return jsonResponse({
                 lan_ip: "localhost",
@@ -4119,6 +4159,25 @@ window.AICOACHING_STANDALONE_MODE = true;
                 });
             });
             return jsonResponse({ month, days });
+        }
+
+        if (path === "/api/social/dm") {
+            if (!db.dms) db.dms = [];
+            const peer = (u.searchParams.get("peer") || bodyData.receiver || "").toLowerCase();
+            if (method === "GET") {
+                const afterId = parseInt(u.searchParams.get("after_id") || "0", 10);
+                return jsonResponse(db.dms.filter(m =>
+                    ((m.sender === user && m.receiver === peer) || (m.sender === peer && m.receiver === user)) && m.id > afterId
+                ).slice(-100));
+            }
+            if (method === "POST") {
+                const msg = (bodyData.message || "").trim();
+                if (!peer || !msg) return jsonResponse({ error: "Mesaj boş olamaz." }, 400);
+                const item = { id: Date.now(), sender: user, receiver: peer, message: msg, created_at: new Date().toISOString() };
+                db.dms.push(item);
+                saveLocalDB(db);
+                return jsonResponse({ status: "ok", ...item });
+            }
         }
 
         if (path === "/api/network-info") {
@@ -7330,9 +7389,16 @@ async function loadSocialLeaderboard() {
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.bench_press ? 'pr-badge' : ''}">${benchVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.deadlift ? 'pr-badge' : ''}">${deadliftVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;">
-                        <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-eye"></i> İncele</button>
+                        <div style="display:flex; gap:6px; justify-content:center;">
+                            <button type="button" class="btn btn-primary btn-sm btn-dm-friend" title="Anlık Sohbet"><i class="fa-solid fa-comments"></i> Mesaj</button>
+                            <button type="button" class="btn btn-secondary btn-sm btn-view-friend"><i class="fa-solid fa-eye"></i> İncele</button>
+                        </div>
                     </td>
                 `;
+                tr.querySelector(".btn-dm-friend")?.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openFriendChat(user);
+                });
                 leaderboardBody.appendChild(tr);
             });
         } else {
@@ -7426,6 +7492,90 @@ function openSocialDayModal(dateKey, entries) {
         `).join("");
     }
     modal.classList.remove("hidden");
+}
+
+let dmPollTimer = null;
+let dmCurrentPeer = null;
+let dmLastId = 0;
+
+function appendDmBubble(m) {
+    const box = document.getElementById("dm-messages-box");
+    if (!box) return;
+    const isMe = m.sender === state.username;
+    const div = document.createElement("div");
+    div.style.cssText = `max-width:80%; padding:8px 12px; border-radius:12px; font-size:0.86rem; line-height:1.4; align-self:${isMe ? 'flex-end' : 'flex-start'}; background:${isMe ? 'var(--neon-orange)' : '#fff'}; color:${isMe ? '#fff' : 'var(--text-primary)'}; border:${isMe ? 'none' : '1px solid var(--border-color)'};`;
+    const t = m.created_at ? new Date(m.created_at + (m.created_at.endsWith("Z") ? "" : "Z")).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }) : "";
+    div.innerHTML = `<div>${m.message.replace(/</g, "&lt;")}</div><div style="font-size:0.65rem; opacity:0.75; margin-top:2px; text-align:right;">${t}</div>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+async function fetchDmUpdates() {
+    if (!dmCurrentPeer) return;
+    try {
+        const res = await fetch(apiURL(`/api/social/dm?peer=${encodeURIComponent(dmCurrentPeer)}&after_id=${dmLastId}`));
+        if (res.ok) {
+            const list = await res.json();
+            const box = document.getElementById("dm-messages-box");
+            if (dmLastId === 0 && box && list.length === 0) {
+                box.innerHTML = `<p class="subtitle" style="text-align:center; margin:auto; font-size:0.82rem;">Henüz mesaj yok. İlk mesajı sen gönder!</p>`;
+            }
+            list.forEach(m => {
+                if (dmLastId === 0 && box && box.querySelector("p.subtitle")) box.innerHTML = "";
+                if (m.id > dmLastId) {
+                    dmLastId = m.id;
+                    appendDmBubble(m);
+                }
+            });
+        }
+    } catch (e) { }
+}
+
+function openFriendChat(friend) {
+    const modal = document.getElementById("social-dm-modal");
+    const avatarEl = document.getElementById("dm-modal-avatar");
+    const nameEl = document.getElementById("dm-modal-name");
+    const statusEl = document.getElementById("dm-modal-status");
+    const box = document.getElementById("dm-messages-box");
+    const input = document.getElementById("dm-message-input");
+    const sendBtn = document.getElementById("btn-send-dm");
+    const closeBtn = document.getElementById("btn-close-dm-modal");
+    if (!modal || !box) return;
+
+    dmCurrentPeer = friend.username;
+    dmLastId = 0;
+    if (avatarEl) avatarEl.innerHTML = renderAvatarHtml(friend, 38);
+    if (nameEl) nameEl.textContent = friend.name || friend.username;
+    if (statusEl) statusEl.innerHTML = friend.is_online ? '<span style="color:#059669; font-weight:700;">● Çevrimiçi</span>' : '● Çevrimdışı';
+    box.innerHTML = `<p class="subtitle" style="text-align:center; margin:auto;">Mesajlar yükleniyor...</p>`;
+    modal.classList.remove("hidden");
+
+    if (dmPollTimer) clearInterval(dmPollTimer);
+    fetchDmUpdates();
+    dmPollTimer = setInterval(fetchDmUpdates, 2500);
+
+    const closeDm = () => {
+        modal.classList.add("hidden");
+        if (dmPollTimer) { clearInterval(dmPollTimer); dmPollTimer = null; }
+        dmCurrentPeer = null;
+    };
+    if (closeBtn) closeBtn.onclick = closeDm;
+
+    const sendDm = async () => {
+        const txt = (input?.value || "").trim();
+        if (!txt || !dmCurrentPeer) return;
+        input.value = "";
+        try {
+            const res = await fetch(apiURL("/api/social/dm"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ receiver: dmCurrentPeer, message: txt })
+            });
+            if (res.ok) await fetchDmUpdates();
+        } catch (e) { }
+    };
+    if (sendBtn) sendBtn.onclick = sendDm;
+    if (input) input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); sendDm(); } };
 }
 
 function showSocialUserDetail(user) {

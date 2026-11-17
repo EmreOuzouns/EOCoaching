@@ -160,6 +160,15 @@ def init_db():
             created_at      TEXT DEFAULT (datetime('now')),
             PRIMARY KEY (username, friend_username)
         );
+
+        CREATE TABLE IF NOT EXISTS direct_messages (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender      TEXT NOT NULL,
+            receiver    TEXT NOT NULL,
+            message     TEXT NOT NULL,
+            created_at  TEXT DEFAULT (datetime('now'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_dm_pair ON direct_messages(sender, receiver);
         """)
         for col_def in [
             "ALTER TABLE users ADD COLUMN password_hash TEXT DEFAULT ''",
@@ -487,6 +496,44 @@ def db_remove_friend(data: dict, user: str = "default"):
     with get_db() as conn:
         conn.execute("DELETE FROM friends WHERE username=? AND friend_username=?", (uname, friend_raw))
     return {"status": "ok"}
+
+def db_get_dm(user: str, peer: str, after_id: int = 0):
+    me = safe_username(user)
+    other = safe_username(peer)
+    with get_db() as conn:
+        rows = conn.execute("""
+            SELECT id, sender, receiver, message, created_at
+            FROM direct_messages
+            WHERE ((sender=? AND receiver=?) OR (sender=? AND receiver=?))
+              AND id > ?
+            ORDER BY id ASC LIMIT 100
+        """, (me, other, other, me, int(after_id or 0))).fetchall()
+    return [
+        {
+            "id": r["id"],
+            "sender": r["sender"],
+            "receiver": r["receiver"],
+            "message": r["message"],
+            "created_at": r["created_at"]
+        }
+        for r in rows
+    ]
+
+def db_send_dm(data: dict, user: str = "default"):
+    me = safe_username(user or data.get("sender"))
+    other = safe_username(data.get("receiver"))
+    msg = (data.get("message") or "").strip()
+    if not other or not msg:
+        return {"error": "Alıcı ve mesaj boş olamaz."}, 400
+    now_iso = datetime.utcnow().isoformat()
+    with get_db() as conn:
+        cur = conn.execute(
+            "INSERT INTO direct_messages (sender, receiver, message, created_at) VALUES (?, ?, ?, ?)",
+            (me, other, msg, now_iso)
+        )
+        conn.execute("UPDATE users SET last_seen=? WHERE username=?", (now_iso, me))
+        msg_id = cur.lastrowid
+    return {"status": "ok", "id": msg_id, "sender": me, "receiver": other, "message": msg, "created_at": now_iso}, 200
 
 def db_auth_delete_user(data: dict):
     raw_user = safe_username(data.get("username"))
@@ -1116,6 +1163,18 @@ if USE_FASTAPI:
         data = await request.json()
         return db_remove_friend(data, user)
 
+    @app.get("/api/social/dm")
+    def social_get_dm(user: str = Query("default"), peer: str = Query(...), after_id: int = Query(0)):
+        return db_get_dm(user, peer, after_id)
+
+    @app.post("/api/social/dm")
+    async def social_send_dm(request: Request, user: str = Query("default")):
+        data = await request.json()
+        res, code = db_send_dm(data, user)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
     @app.post("/api/auth/offline")
     async def auth_offline(request: Request):
         data = await request.json()
@@ -1333,6 +1392,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 data = self._read_json()
                 return self._send_json(db_remove_friend(data, user))
 
+            elif path == "/api/social/dm":
+                data = self._read_json()
+                res, code = db_send_dm(data, user)
+                return self._send_json(res, code)
+
             elif path == "/api/auth/delete-user":
                 data = self._read_json()
                 res, code = db_auth_delete_user(data)
@@ -1364,6 +1428,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             elif path == "/api/social/calendar":
                 month = qs.get("month", [None])[0]
                 return self._send_json(db_social_calendar(month, user))
+
+            elif path == "/api/social/dm":
+                peer = qs.get("peer", [""])[0]
+                after_id = int(qs.get("after_id", [0])[0])
+                return self._send_json(db_get_dm(user, peer, after_id))
 
             elif path == "/api/chat":
                 chat_date = qs.get("chat_date", [None])[0]
@@ -1441,6 +1510,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             elif path == "/api/social/friends/remove":
                 data = self._read_json()
                 return self._send_json(db_remove_friend(data, user))
+
+            elif path == "/api/social/dm":
+                data = self._read_json()
+                res, code = db_send_dm(data, user)
+                return self._send_json(res, code)
 
             elif path == "/api/auth/delete-user":
                 data = self._read_json()
