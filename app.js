@@ -237,19 +237,47 @@
             return jsonResponse({ status: "ok", message: "Hesap kalıcı olarak silindi." });
         }
 
+        if (path === "/api/auth/offline" && method === "POST") {
+            return jsonResponse({ status: "ok" });
+        }
+
+        if (path === "/api/social/friends/add" && method === "POST") {
+            if (!db.friends) db.friends = {};
+            if (!db.friends[user]) db.friends[user] = [];
+            const fname = (bodyData.friend_username || "").trim().toLowerCase();
+            if (!fname || !/^[a-z0-9_]+$/.test(fname)) return jsonResponse({ error: "Geçerli bir kullanıcı adı girin." }, 400);
+            if (fname === user) return jsonResponse({ error: "Kendinizi arkadaş olarak ekleyemezsiniz." }, 400);
+            if (!(db.auth && db.auth[fname]) && !(db.users && db.users[fname])) return jsonResponse({ error: `@${fname} adlı kullanıcı bulunamadı.` }, 404);
+            if (!db.friends[user].includes(fname)) db.friends[user].push(fname);
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", friend_username: fname });
+        }
+
+        if (path === "/api/social/friends/remove" && method === "POST") {
+            if (db.friends && db.friends[user]) {
+                const fname = (bodyData.friend_username || "").trim().toLowerCase();
+                db.friends[user] = db.friends[user].filter(x => x !== fname);
+                saveLocalDB(db);
+            }
+            return jsonResponse({ status: "ok" });
+        }
+
         if (path === "/api/social/users") {
             const todayStr = new Date().toISOString().slice(0, 10);
             const authMap = db.auth || {};
-            const list = Object.keys(db.users || {}).map(uname => {
+            const fList = (db.friends && db.friends[user]) || [];
+            const allowed = new Set([user, ...fList]);
+            const list = Object.keys(db.users || {}).filter(u => allowed.has(u)).map(uname => {
                 const prof = db.users[uname] || {};
-                if (prof.privacy === "private") return null;
+                if (prof.privacy === "private" && uname !== user) return null;
                 const todayLog = (db.logs[uname] && db.logs[uname][todayStr]) || {};
                 const nut = todayLog.nutrition || {};
                 return {
                     username: uname,
                     name: prof.name || uname,
                     avatar_data: (authMap[uname] && authMap[uname].avatar_data) || prof.avatar_data || "",
-                    is_online: true,
+                    is_online: uname === user,
+                    is_friend: fList.includes(uname),
                     weight: prof.weight || 70,
                     height: prof.height || 170,
                     age: prof.age || 23,
@@ -270,8 +298,10 @@
         if (path === "/api/social/calendar") {
             const month = u.searchParams.get("month") || new Date().toISOString().slice(0, 7);
             const authMap = db.auth || {};
+            const fList = (db.friends && db.friends[user]) || [];
+            const allowed = new Set([user, ...fList]);
             const days = {};
-            Object.keys(db.logs || {}).forEach(uname => {
+            Object.keys(db.logs || {}).filter(u => allowed.has(u)).forEach(uname => {
                 const prof = (db.users && db.users[uname]) || {};
                 if (prof.privacy === "private") return;
                 const uLogs = db.logs[uname] || {};
@@ -587,19 +617,47 @@
             return jsonResponse({ status: "ok", message: "Hesap kalıcı olarak silindi." });
         }
 
+        if (path === "/api/auth/offline" && method === "POST") {
+            return jsonResponse({ status: "ok" });
+        }
+
+        if (path === "/api/social/friends/add" && method === "POST") {
+            if (!db.friends) db.friends = {};
+            if (!db.friends[user]) db.friends[user] = [];
+            const fname = (bodyData.friend_username || "").trim().toLowerCase();
+            if (!fname || !/^[a-z0-9_]+$/.test(fname)) return jsonResponse({ error: "Geçerli bir kullanıcı adı girin." }, 400);
+            if (fname === user) return jsonResponse({ error: "Kendinizi arkadaş olarak ekleyemezsiniz." }, 400);
+            if (!(db.auth && db.auth[fname]) && !(db.users && db.users[fname])) return jsonResponse({ error: `@${fname} adlı kullanıcı bulunamadı.` }, 404);
+            if (!db.friends[user].includes(fname)) db.friends[user].push(fname);
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", friend_username: fname });
+        }
+
+        if (path === "/api/social/friends/remove" && method === "POST") {
+            if (db.friends && db.friends[user]) {
+                const fname = (bodyData.friend_username || "").trim().toLowerCase();
+                db.friends[user] = db.friends[user].filter(x => x !== fname);
+                saveLocalDB(db);
+            }
+            return jsonResponse({ status: "ok" });
+        }
+
         if (path === "/api/social/users") {
             const todayStr = new Date().toISOString().slice(0, 10);
             const authMap = db.auth || {};
-            const list = Object.keys(db.users || {}).map(uname => {
+            const fList = (db.friends && db.friends[user]) || [];
+            const allowed = new Set([user, ...fList]);
+            const list = Object.keys(db.users || {}).filter(u => allowed.has(u)).map(uname => {
                 const prof = db.users[uname] || {};
-                if (prof.privacy === "private") return null;
+                if (prof.privacy === "private" && uname !== user) return null;
                 const todayLog = (db.logs[uname] && db.logs[uname][todayStr]) || {};
                 const nut = todayLog.nutrition || {};
                 return {
                     username: uname,
                     name: prof.name || uname,
                     avatar_data: (authMap[uname] && authMap[uname].avatar_data) || prof.avatar_data || "",
-                    is_online: true,
+                    is_online: uname === user,
+                    is_friend: fList.includes(uname),
                     weight: prof.weight || 70,
                     height: prof.height || 170,
                     age: prof.age || 23,
@@ -620,8 +678,10 @@
         if (path === "/api/social/calendar") {
             const month = u.searchParams.get("month") || new Date().toISOString().slice(0, 7);
             const authMap = db.auth || {};
+            const fList = (db.friends && db.friends[user]) || [];
+            const allowed = new Set([user, ...fList]);
             const days = {};
-            Object.keys(db.logs || {}).forEach(uname => {
+            Object.keys(db.logs || {}).filter(u => allowed.has(u)).forEach(uname => {
                 const prof = (db.users && db.users[uname]) || {};
                 if (prof.privacy === "private") return;
                 const uLogs = db.logs[uname] || {};
@@ -3544,6 +3604,11 @@ async function initLoginSession() {
         }).catch(() => {});
         ping();
         setInterval(ping, 60000);
+        window.addEventListener("beforeunload", () => {
+            try {
+                navigator.sendBeacon("/api/auth/offline", JSON.stringify({ username }));
+            } catch (e) { }
+        });
     }
 
     async function completeAuth(username, remember, avatarData) {
@@ -3677,6 +3742,40 @@ function initSocialTab() {
         }
     });
 
+    // Add Friend handler
+    const addFriendInput = document.getElementById("social-add-friend-input");
+    const addFriendBtn = document.getElementById("btn-social-add-friend");
+    const friendMsgEl = document.getElementById("social-friend-msg");
+    addFriendBtn?.addEventListener("click", async () => {
+        const fname = (addFriendInput?.value || "").trim().toLowerCase();
+        if (!fname) return;
+        try {
+            const res = await fetch(apiURL("/api/social/friends/add"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ friend_username: fname })
+            });
+            const data = await res.json();
+            if (friendMsgEl) {
+                friendMsgEl.classList.remove("hidden");
+                if (res.ok) {
+                    friendMsgEl.style.background = "rgba(16,185,129,0.12)";
+                    friendMsgEl.style.color = "#059669";
+                    friendMsgEl.textContent = `@${fname} arkadaş listene eklendi!`;
+                    if (addFriendInput) addFriendInput.value = "";
+                    await loadSocialLeaderboard();
+                    await loadSocialCalendar();
+                } else {
+                    friendMsgEl.style.background = "rgba(239,68,68,0.12)";
+                    friendMsgEl.style.color = "#dc2626";
+                    friendMsgEl.textContent = data.detail || data.error || "Arkadaş eklenemedi.";
+                }
+            }
+        } catch (err) {
+            showToast("Arkadaş eklenirken hata oluştu.");
+        }
+    });
+
     // Calendar month navigation & filter
     document.getElementById("btn-cal-prev")?.addEventListener("click", () => {
         socialCalDate = new Date(socialCalDate.getFullYear(), socialCalDate.getMonth() - 1, 1);
@@ -3727,10 +3826,12 @@ function renderAvatarHtml(user, size = 36) {
     const imgHtml = user.avatar_data
         ? `<img src="${user.avatar_data}" alt="${firstLetter}" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; border:2px solid rgba(249,115,22,0.4);">`
         : `<span class="social-user-avatar" style="width:${size}px; height:${size}px; font-size:${Math.round(size * 0.45)}px;">${firstLetter}</span>`;
-    const dotColor = user.is_online ? "#10b981" : "#94a3b8";
+    const dotStyle = user.is_online
+        ? "background:#10b981; box-shadow:0 0 6px rgba(16,185,129,0.8);"
+        : "background:#cbd5e1; opacity:0.5;";
     return `<div style="position:relative; display:inline-flex; flex-shrink:0;">
         ${imgHtml}
-        <span title="${user.is_online ? 'Çevrimiçi' : 'Çevrimdışı'}" style="position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; border:2px solid #fff;"></span>
+        <span title="${user.is_online ? 'Çevrimiçi' : 'Çevrimdışı'}" style="position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; border:2px solid #fff; ${dotStyle}"></span>
     </div>`;
 }
 
@@ -3743,11 +3844,12 @@ async function loadSocialLeaderboard() {
     leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
 
     try {
-        const res = await fetch("/api/social/users");
+        const res = await fetch(apiURL("/api/social/users"));
         if (res.ok) {
-            const users = await res.json();
+            const allUsers = await res.json();
+            const friends = allUsers.filter(u => u.username !== state.username);
 
-            users.forEach(u => {
+            allUsers.forEach(u => {
                 u.prs = u.prs || {};
                 u.totalPR = (u.prs.squat || 0) + (u.prs.bench_press || 0) + (u.prs.deadlift || 0);
                 if (u.username === state.username && u.avatar_data) {
@@ -3756,17 +3858,17 @@ async function loadSocialLeaderboard() {
                     if (myAvatarEl) myAvatarEl.src = u.avatar_data;
                 }
             });
-            users.sort((a, b) => (b.is_online ? 1 : 0) - (a.is_online ? 1 : 0) || b.totalPR - a.totalPR);
+            friends.sort((a, b) => (b.is_online ? 1 : 0) - (a.is_online ? 1 : 0) || b.totalPR - a.totalPR);
 
             if (onlineCountEl) {
-                const onlineNum = users.filter(u => u.is_online).length;
-                onlineCountEl.textContent = `${onlineNum} Çevrimiçi / ${users.length} Kişi`;
+                const onlineNum = friends.filter(u => u.is_online).length;
+                onlineCountEl.textContent = `${onlineNum} Çevrimiçi / ${friends.length} Arkadaş`;
             }
 
             if (filterSelect) {
                 const prev = filterSelect.value;
                 filterSelect.innerHTML = `<option value="all">Tümü (Ben & Arkadaşlar)</option>`;
-                users.forEach(u => {
+                allUsers.forEach(u => {
                     const opt = document.createElement("option");
                     opt.value = u.username;
                     opt.textContent = `${u.name} (@${u.username})`;
@@ -3775,13 +3877,13 @@ async function loadSocialLeaderboard() {
                 if ([...filterSelect.options].some(o => o.value === prev)) filterSelect.value = prev;
             }
 
-            if (users.length === 0) {
-                leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px; color:var(--text-muted);">Hiç herkese açık kullanıcı bulunamadı.</td></tr>`;
+            if (friends.length === 0) {
+                leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:24px; color:var(--text-muted); font-weight:600;">Henüz arkadaşın yok. Yukarıdan kullanıcı adı yazarak arkadaş ekleyebilirsin.</td></tr>`;
                 return;
             }
 
             leaderboardBody.innerHTML = "";
-            users.forEach(user => {
+            friends.forEach(user => {
                 const tr = document.createElement("tr");
                 tr.style.cursor = "pointer";
                 tr.addEventListener("click", () => showSocialUserDetail(user));
@@ -3796,8 +3898,8 @@ async function loadSocialLeaderboard() {
                         <div class="social-user-cell">
                             ${renderAvatarHtml(user, 38)}
                             <div>
-                                <strong style="color:var(--text-primary); display:block;">${user.name} ${user.username === state.username ? '<span style="font-size:0.7rem; color:var(--neon-orange);">(Sen)</span>' : ''}</strong>
-                                <span style="font-size:0.75rem; color:var(--text-muted);">@${user.username} · ${user.is_online ? '<span style="color:#059669;">Çevrimiçi</span>' : 'Çevrimdışı'}</span>
+                                <strong style="color:var(--text-primary); display:block;">${user.name}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">@${user.username} · ${user.is_online ? '<span style="color:#059669; font-weight:700;">Çevrimiçi</span>' : '<span style="opacity:0.65;">Çevrimdışı</span>'}</span>
                             </div>
                         </div>
                     </td>
@@ -3808,7 +3910,9 @@ async function loadSocialLeaderboard() {
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.squat ? 'pr-badge' : ''}">${squatVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.bench_press ? 'pr-badge' : ''}">${benchVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.deadlift ? 'pr-badge' : ''}">${deadliftVal}</span></td>
-                    <td style="padding: 12px 8px; text-align: center;"><button class="btn btn-secondary btn-sm"><i class="fa-solid fa-eye"></i> İncele</button></td>
+                    <td style="padding: 12px 8px; text-align: center;">
+                        <button class="btn btn-secondary btn-sm"><i class="fa-solid fa-eye"></i> İncele</button>
+                    </td>
                 `;
                 leaderboardBody.appendChild(tr);
             });
@@ -3834,7 +3938,7 @@ async function loadSocialCalendar() {
 
     let daysMap = {};
     try {
-        const res = await fetch(`/api/social/calendar?month=${monthStr}`);
+        const res = await fetch(apiURL(`/api/social/calendar?month=${monthStr}`));
         if (res.ok) {
             const payload = await res.json();
             daysMap = payload.days || {};

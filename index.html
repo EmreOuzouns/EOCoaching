@@ -1192,10 +1192,19 @@
 
                 <!-- Friends Online + Today Macros + PR Table -->
                 <div class="glass-card animate-slide-up" style="padding: 20px; overflow-x: auto; margin-bottom: 18px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
                         <h4 style="margin:0; font-family:var(--font-header);"><i class="fa-solid fa-signal text-neon-green"></i> Arkadaşlar & Günlük Makro / PR Durumu</h4>
                         <span id="social-online-count" style="font-size:0.78rem; color:#059669; font-weight:700;">0 Çevrimiçi</span>
                     </div>
+
+                    <!-- Add Friend Bar -->
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+                        <input type="text" id="social-add-friend-input" placeholder="Arkadaşının kullanıcı adını yaz (örn: ahmet)" style="flex:1; min-width:200px; padding:8px 12px; border-radius:10px;">
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-social-add-friend">
+                            <i class="fa-solid fa-user-plus"></i> Arkadaş Ekle
+                        </button>
+                    </div>
+                    <div id="social-friend-msg" class="hidden" style="font-size:0.8rem; font-weight:700; margin-bottom:10px; padding:6px 10px; border-radius:8px;"></div>
                     <table class="social-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
                             <tr

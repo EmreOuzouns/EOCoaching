@@ -45,7 +45,7 @@ except Exception as _fastapi_err:
 # ─────────────────────────────────────────────
 # Configuration
 # ─────────────────────────────────────────────
-PORT = 8090
+PORT = int(os.environ.get("PORT", 8090))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -152,6 +152,13 @@ def init_db():
             created_at  TEXT DEFAULT (datetime('now'))
         );
         CREATE INDEX IF NOT EXISTS idx_pr_user ON pr_history(username, exercise);
+
+        CREATE TABLE IF NOT EXISTS friends (
+            username        TEXT NOT NULL,
+            friend_username TEXT NOT NULL,
+            created_at      TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (username, friend_username)
+        );
         """)
         for col_def in [
             "ALTER TABLE users ADD COLUMN password_hash TEXT DEFAULT ''",
@@ -453,6 +460,33 @@ def db_auth_heartbeat(data: dict):
         conn.execute("UPDATE users SET last_seen=? WHERE username=?", (now_iso, raw_user))
     return {"status": "ok"}
 
+def db_auth_offline(data: dict):
+    raw_user = safe_username(data.get("username"))
+    with get_db() as conn:
+        conn.execute("UPDATE users SET last_seen='' WHERE username=?", (raw_user,))
+    return {"status": "ok"}
+
+def db_add_friend(data: dict, user: str = "default"):
+    uname = safe_username(user or data.get("username"))
+    friend_raw = (data.get("friend_username") or "").strip().lower()
+    if not friend_raw or not re.match(r"^[a-z0-9_]+$", friend_raw):
+        return {"error": "Geçerli bir arkadaş kullanıcı adı girin."}, 400
+    if friend_raw == uname:
+        return {"error": "Kendinizi arkadaş olarak ekleyemezsiniz."}, 400
+    with get_db() as conn:
+        exists = conn.execute("SELECT username FROM users WHERE username=?", (friend_raw,)).fetchone()
+        if not exists:
+            return {"error": f"@{friend_raw} adlı kullanıcı bulunamadı."}, 404
+        conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (uname, friend_raw))
+    return {"status": "ok", "friend_username": friend_raw}, 200
+
+def db_remove_friend(data: dict, user: str = "default"):
+    uname = safe_username(user or data.get("username"))
+    friend_raw = safe_username(data.get("friend_username"))
+    with get_db() as conn:
+        conn.execute("DELETE FROM friends WHERE username=? AND friend_username=?", (uname, friend_raw))
+    return {"status": "ok"}
+
 def db_auth_delete_user(data: dict):
     raw_user = safe_username(data.get("username"))
     password = data.get("password") or ""
@@ -480,9 +514,14 @@ def _is_online(last_seen_str: str) -> bool:
     except Exception:
         return False
 
-def db_social_users():
+def db_social_users(viewer: str = None):
     today_str = str(date.today())
+    viewer_name = safe_username(viewer) if viewer else None
     with get_db() as conn:
+        friend_set = set()
+        if viewer_name:
+            f_rows = conn.execute("SELECT friend_username FROM friends WHERE username=?", (viewer_name,)).fetchall()
+            friend_set = {r["friend_username"] for r in f_rows}
         rows = conn.execute("SELECT username, profile_json, avatar_data, last_seen FROM users").fetchall()
         logs_rows = conn.execute(
             "SELECT username, nutrition_json, meals_json FROM daily_logs WHERE log_date=?",
@@ -506,15 +545,18 @@ def db_social_users():
     result = []
     for row in rows:
         try:
-            profile = json.loads(row["profile_json"] or "{}")
-            if profile.get("privacy") == "private":
-                continue
             uname = row["username"]
+            if viewer_name and uname != viewer_name and uname not in friend_set:
+                continue
+            profile = json.loads(row["profile_json"] or "{}")
+            if profile.get("privacy") == "private" and uname != viewer_name:
+                continue
             result.append({
                 "username": uname,
                 "name": profile.get("name") or uname,
                 "avatar_data": row["avatar_data"] or profile.get("avatar_data", ""),
                 "is_online": _is_online(row["last_seen"] or ""),
+                "is_friend": uname in friend_set,
                 "last_seen": row["last_seen"] or "",
                 "gender": profile.get("gender", "male"),
                 "weight": profile.get("weight", 70),
@@ -530,9 +572,14 @@ def db_social_users():
             continue
     return result
 
-def db_social_calendar(month: str = None):
+def db_social_calendar(month: str = None, viewer: str = None):
     month_prefix = month or str(date.today())[:7]
+    viewer_name = safe_username(viewer) if viewer else None
     with get_db() as conn:
+        allowed_set = None
+        if viewer_name:
+            f_rows = conn.execute("SELECT friend_username FROM friends WHERE username=?", (viewer_name,)).fetchall()
+            allowed_set = {viewer_name} | {r["friend_username"] for r in f_rows}
         u_rows = conn.execute("SELECT username, profile_json, avatar_data FROM users").fetchall()
         l_rows = conn.execute(
             "SELECT username, log_date, nutrition_json, meals_json, workout_json FROM daily_logs WHERE log_date LIKE ?",
@@ -542,11 +589,14 @@ def db_social_calendar(month: str = None):
     users_meta = {}
     for ur in u_rows:
         try:
-            prof = json.loads(ur["profile_json"] or "{}")
-            if prof.get("privacy") == "private":
+            uname = ur["username"]
+            if allowed_set is not None and uname not in allowed_set:
                 continue
-            users_meta[ur["username"]] = {
-                "name": prof.get("name") or ur["username"],
+            prof = json.loads(ur["profile_json"] or "{}")
+            if prof.get("privacy") == "private" and uname != viewer_name:
+                continue
+            users_meta[uname] = {
+                "name": prof.get("name") or uname,
                 "avatar_data": ur["avatar_data"] or prof.get("avatar_data", "")
             }
         except Exception:
@@ -1045,12 +1095,30 @@ if USE_FASTAPI:
         return db_list_users()
 
     @app.get("/api/social/users")
-    def social_users():
-        return db_social_users()
+    def social_users(user: str = Query(None)):
+        return db_social_users(user)
 
     @app.get("/api/social/calendar")
-    def social_calendar(month: str = Query(None)):
-        return db_social_calendar(month)
+    def social_calendar(month: str = Query(None), user: str = Query(None)):
+        return db_social_calendar(month, user)
+
+    @app.post("/api/social/friends/add")
+    async def social_add_friend(request: Request, user: str = Query("default")):
+        data = await request.json()
+        res, code = db_add_friend(data, user)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
+    @app.post("/api/social/friends/remove")
+    async def social_remove_friend(request: Request, user: str = Query("default")):
+        data = await request.json()
+        return db_remove_friend(data, user)
+
+    @app.post("/api/auth/offline")
+    async def auth_offline(request: Request):
+        data = await request.json()
+        return db_auth_offline(data)
 
     @app.post("/api/auth/register")
     async def auth_register(request: Request):
@@ -1245,6 +1313,19 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 data = self._read_json()
                 return self._send_json(db_auth_heartbeat(data))
 
+            elif path == "/api/auth/offline":
+                data = self._read_json()
+                return self._send_json(db_auth_offline(data))
+
+            elif path == "/api/social/friends/add":
+                data = self._read_json()
+                res, code = db_add_friend(data, user)
+                return self._send_json(res, code)
+
+            elif path == "/api/social/friends/remove":
+                data = self._read_json()
+                return self._send_json(db_remove_friend(data, user))
+
             elif path == "/api/auth/delete-user":
                 data = self._read_json()
                 res, code = db_auth_delete_user(data)
@@ -1271,11 +1352,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 return self._send_json(db_list_users())
 
             elif path == "/api/social/users":
-                return self._send_json(db_social_users())
+                return self._send_json(db_social_users(user))
 
             elif path == "/api/social/calendar":
                 month = qs.get("month", [None])[0]
-                return self._send_json(db_social_calendar(month))
+                return self._send_json(db_social_calendar(month, user))
 
             elif path == "/api/chat":
                 chat_date = qs.get("chat_date", [None])[0]
@@ -1340,6 +1421,19 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             elif path == "/api/auth/heartbeat":
                 data = self._read_json()
                 return self._send_json(db_auth_heartbeat(data))
+
+            elif path == "/api/auth/offline":
+                data = self._read_json()
+                return self._send_json(db_auth_offline(data))
+
+            elif path == "/api/social/friends/add":
+                data = self._read_json()
+                res, code = db_add_friend(data, user)
+                return self._send_json(res, code)
+
+            elif path == "/api/social/friends/remove":
+                data = self._read_json()
+                return self._send_json(db_remove_friend(data, user))
 
             elif path == "/api/auth/delete-user":
                 data = self._read_json()
