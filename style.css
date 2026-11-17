@@ -1570,6 +1570,19 @@ form {
     .quiz-options-grid {
         grid-template-columns: 1fr;
     }
+    .dl-modal-grid {
+        grid-template-columns: 1fr !important;
+    }
+    #social-calendar-grid > div {
+        min-height: 52px !important;
+        padding: 4px !important;
+    }
+}
+.dl-modal-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
 }
 .option-card {
     background: rgba(255, 255, 255, 0.45);

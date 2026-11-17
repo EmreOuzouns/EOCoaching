@@ -1075,6 +1075,9 @@ def build_platform_package(platform: str, host_url: str) -> tuple:
             zf.writestr("EOcoachingmacOS.html", build_standalone_html())
         return buf.getvalue(), "EOcoachingmacOS.zip", "application/zip"
 
+    elif platform == "ios-profile":
+        return build_ios_mobileconfig(host_url), "EOcoachingiOS.mobileconfig", "application/x-apple-aspen-config"
+
     elif platform == "ios":
         zip_path = os.path.join(downloads_dir, "EOcoachingiOS.zip")
         if os.path.exists(zip_path):
@@ -1281,8 +1284,12 @@ if USE_FASTAPI:
 
     @app.get("/api/download/{platform}")
     def download_app(platform: str):
-        ip = get_lan_ip()
-        host_url = f"http://{ip}:{PORT}"
+        pub_domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+        if pub_domain:
+            host_url = f"https://{pub_domain}"
+        else:
+            ip = get_lan_ip()
+            host_url = f"http://{ip}:{PORT}"
         data, fname, ctype = build_platform_package(platform, host_url)
         return Response(
             content=data,

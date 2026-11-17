@@ -1655,7 +1655,7 @@
             </div>
 
             <!-- 4 Platform Grid -->
-            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:14px; margin-bottom:18px;">
+            <div class="dl-modal-grid">
                 <!-- Windows -->
                 <div
                     style="background:#ffffff; border:1px solid var(--border-color); border-radius:14px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
@@ -1705,15 +1705,20 @@
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/android" download="EOcoachingAndroid.zip"
-                            class="btn btn-primary btn-sm btn-dl-action" data-platform="android"
+                        <a href="https://eocoaching-production.up.railway.app" target="_blank" rel="noopener"
+                            class="btn btn-primary btn-sm"
                             style="text-decoration:none; width:100%; background:#10b981;">
-                            <i class="fa-brands fa-android"></i> Android Paketini İndir (.zip)
+                            <i class="fa-brands fa-android"></i> Android Canlı Uygulamayı Aç (7/24)
                         </a>
                         <button type="button" class="btn btn-secondary btn-sm" id="btn-android-pwa-guide"
                             style="width:100%;">
                             <i class="fa-solid fa-mobile-screen-button"></i> Ana Ekrana Kurulum (PWA)
                         </button>
+                        <a href="/api/download/android" download="EOcoachingAndroid.zip"
+                            class="btn btn-secondary btn-sm btn-dl-action" data-platform="android"
+                            style="text-decoration:none; width:100%; font-size:0.75rem;">
+                            <i class="fa-solid fa-box-archive"></i> Çevrimdışı Paket İndir (.zip)
+                        </a>
                     </div>
                 </div>
 
@@ -1730,20 +1735,24 @@
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            iOS kurulum profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi
-                            (<code>.zip</code>) indirin.
+                            Tek tıkla iOS Ana Ekran profili (sarı dambıl logolu) ile kurun veya Safari'den <strong>Paylaş → Ana Ekrana Ekle</strong> yapın.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/ios" download="EOcoachingiOS.zip"
-                            class="btn btn-primary btn-sm btn-dl-action" data-platform="ios"
+                        <a href="/api/download/ios-profile" download="EOcoachingiOS.mobileconfig"
+                            class="btn btn-primary btn-sm"
                             style="text-decoration:none; width:100%; background:#0f172a;">
-                            <i class="fa-brands fa-apple"></i> iOS Paketini İndir (.zip)
+                            <i class="fa-brands fa-apple"></i> iOS Ana Ekrana Kur (.mobileconfig)
+                        </a>
+                        <a href="/api/download/ios" download="EOcoachingiOS.zip"
+                            class="btn btn-secondary btn-sm btn-dl-action" data-platform="ios"
+                            style="text-decoration:none; width:100%;">
+                            <i class="fa-solid fa-box-archive"></i> iOS Paketi İndir (.zip)
                         </a>
                         <a href="/api/download/standalone" download="EOcoachingiOS.html"
                             class="btn btn-secondary btn-sm btn-dl-action" data-platform="standalone"
-                            style="text-decoration:none; width:100%;">
-                            <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama İndir
+                            style="text-decoration:none; width:100%; font-size:0.75rem;">
+                            <i class="fa-solid fa-file-arrow-down"></i> iOS Taşınabilir Uygulama (.html)
                         </a>
                     </div>
                 </div>
