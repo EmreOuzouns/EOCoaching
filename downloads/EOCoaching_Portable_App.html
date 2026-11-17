@@ -18,7 +18,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Barlow:wght@700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
         rel="stylesheet">
 
     <!-- FontAwesome Icons -->
@@ -55,8 +55,8 @@
     --shadow-orange: 0 4px 15px rgba(249, 115, 22, 0.2);
     --shadow-card: 0 8px 30px rgba(15, 23, 42, 0.04);
     
-    --font-header: 'Outfit', sans-serif;
-    --font-body: 'Space Grotesk', sans-serif;
+    --font-header: 'Barlow', sans-serif;
+    --font-body: 'Plus Jakarta Sans', sans-serif;
     
     --protein-color: #f87171;
     --carbs-color: #fbbf24;
@@ -76,8 +76,19 @@
 body {
     background: linear-gradient(135deg, #f5f7fb 0%, #e4e9f2 100%);
     color: var(--text-primary);
+    font-weight: 600;
     min-height: 100vh;
     overflow-x: hidden;
+}
+
+h1, h2, h3, h4, .logo, .nav-link, .btn, .q-stat .val {
+    font-family: var(--font-header);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+p, span, label, input, select, textarea, td, th {
+    font-weight: 600;
 }
 
 /* Scrollbar */
@@ -3004,11 +3015,14 @@ form {
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            Kurulum gerektirmeyen gerçek Windows masaüstü uygulamasını (<code>.exe</code>) veya taşınabilir uygulamayı indirin.
+                            Kurulum gerektirmeyen gerçek Windows masaüstü uygulamasını (<code>.exe</code>) veya
+                            taşınabilir uygulamayı indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/windows" download="AICoaching_Windows.exe" class="btn btn-primary btn-sm btn-dl-action" data-platform="windows" style="text-decoration:none; width:100%;">
+                        <a href="/api/download/windows" download="AICoaching_Windows.exe"
+                            class="btn btn-primary btn-sm btn-dl-action" data-platform="windows"
+                            style="text-decoration:none; width:100%;">
                             <i class="fa-brands fa-windows"></i> Windows Uygulamasını İndir (.exe)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_Portable_App.html"
@@ -3032,11 +3046,14 @@ form {
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            Android cihazınıza tam ekran uygulama olarak kurun veya çevrimdışı çalışan uygulama paketini (<code>.zip</code>) indirin.
+                            Android cihazınıza tam ekran uygulama olarak kurun veya çevrimdışı çalışan uygulama paketini
+                            (<code>.zip</code>) indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/android" download="AICoaching_Android.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="android" style="text-decoration:none; width:100%; background:#10b981;">
+                        <a href="/api/download/android" download="AICoaching_Android.zip"
+                            class="btn btn-primary btn-sm btn-dl-action" data-platform="android"
+                            style="text-decoration:none; width:100%; background:#10b981;">
                             <i class="fa-brands fa-android"></i> Android Paketini İndir (.zip)
                         </a>
                         <button type="button" class="btn btn-secondary btn-sm" id="btn-android-pwa-guide"
@@ -3059,11 +3076,14 @@ form {
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            iOS kurulum profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi (<code>.zip</code>) indirin.
+                            iOS kurulum profilini ve çevrimdışı çalışan iOS uygulamasını içeren paketi
+                            (<code>.zip</code>) indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/ios" download="AICoaching_iOS.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="ios" style="text-decoration:none; width:100%; background:#0f172a;">
+                        <a href="/api/download/ios" download="AICoaching_iOS.zip"
+                            class="btn btn-primary btn-sm btn-dl-action" data-platform="ios"
+                            style="text-decoration:none; width:100%; background:#0f172a;">
                             <i class="fa-brands fa-apple"></i> iOS Paketini İndir (.zip)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_iOS_App.html"
@@ -3088,11 +3108,14 @@ form {
                             </div>
                         </div>
                         <p style="font-size:0.78rem; color:var(--text-secondary); line-height:1.4;">
-                            macOS için <code>AICoaching.app</code> uygulama paketini (<code>.zip</code>) veya bağımsız uygulama dosyasını indirin.
+                            macOS için <code>AICoaching.app</code> uygulama paketini (<code>.zip</code>) veya bağımsız
+                            uygulama dosyasını indirin.
                         </p>
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px;">
-                        <a href="/api/download/mac" download="AICoaching_macOS.zip" class="btn btn-primary btn-sm btn-dl-action" data-platform="mac" style="text-decoration:none; width:100%; background:#8b5cf6;">
+                        <a href="/api/download/mac" download="AICoaching_macOS.zip"
+                            class="btn btn-primary btn-sm btn-dl-action" data-platform="mac"
+                            style="text-decoration:none; width:100%; background:#8b5cf6;">
                             <i class="fa-brands fa-apple"></i> Mac Paketini İndir (.zip)
                         </a>
                         <a href="/api/download/standalone" download="AICoaching_Mac_App.html"
