@@ -51,10 +51,9 @@ The AI Coach reads your current profile, targets, calorie intake, sleep, and wor
 
 ---
 
-## Live App & Downloads (Windows / Android / iOS / macOS)
+## Live App & Download
 
-- **7/24 Live Web App:** [https://eocoaching-production.up.railway.app](https://eocoaching-production.up.railway.app)
-- **Download Center (All Platforms):** [https://eocoaching-production.up.railway.app/indir](https://eocoaching-production.up.railway.app/indir)
+- **7/24 Live App & Download:** [https://eocoaching-production.up.railway.app](https://eocoaching-production.up.railway.app)
 
 ---
 
