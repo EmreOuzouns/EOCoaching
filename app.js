@@ -3145,6 +3145,7 @@ async function initLoginSession() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
             if (confirm("Oturumu kapatmak ve kullanıcı seçim ekranına dönmek istiyor musunuz?")) {
+                sessionStorage.removeItem("active_username");
                 localStorage.removeItem("active_username");
                 state.username = null;
                 state.profile = null;
@@ -3182,7 +3183,7 @@ async function initLoginSession() {
         console.error("Kullanıcı listesi alınamadı:", e);
     }
 
-    const storedUser = localStorage.getItem("active_username");
+    const storedUser = sessionStorage.getItem("active_username");
     if (storedUser) {
         state.username = storedUser;
         loginOverlay.classList.add("hidden");
@@ -3207,7 +3208,7 @@ async function initLoginSession() {
                 chosenUser = typed;
             }
 
-            localStorage.setItem("active_username", chosenUser);
+            sessionStorage.setItem("active_username", chosenUser);
             state.username = chosenUser;
             loginOverlay.classList.add("hidden");
 
@@ -3663,7 +3664,7 @@ function initPWAInstall() {
                 const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
                 const a = document.createElement("a");
                 a.href = URL.createObjectURL(blob);
-                a.download = link.getAttribute("download") || "EOCoaching_Portable_App.html";
+                a.download = link.getAttribute("download") || "EOcoachingPortable.html";
                 a.click();
                 showToast("📥 Uygulama dosyası indirildi!");
             } else {

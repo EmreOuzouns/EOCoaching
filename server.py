@@ -621,6 +621,7 @@ def build_standalone_html() -> bytes:
     icon192_b64 = get_icon_base64("192")
     if icon192_b64:
         html = html.replace('href="/icons/icon-192.png"', f'href="data:image/png;base64,{icon192_b64}"')
+        html = html.replace('src="/icons/icon-192.png"', f'src="data:image/png;base64,{icon192_b64}"')
     html = html.replace('<link rel="manifest" href="manifest.json">', '')
     html = html.replace('<link rel="stylesheet" href="style.css">', f'<style>\n{css}\n</style>')
     html = html.replace('<script src="app.js"></script>', f'<script>\nwindow.AICOACHING_STANDALONE_MODE = true;\n{js}\n</script>')
@@ -713,13 +714,13 @@ def build_ios_mobileconfig(host_url: str) -> bytes:
             <key>IsRemovable</key>
             <true/>
             <key>Label</key>
-            <string>AICoaching</string>
+            <string>EOcoaching</string>
             <key>PayloadDescription</key>
-            <string>AICoaching Home Screen Web Application</string>
+            <string>EOcoaching Home Screen Web Application</string>
             <key>PayloadDisplayName</key>
-            <string>AICoaching</string>
+            <string>EOcoaching</string>
             <key>PayloadIdentifier</key>
-            <string>com.emreouzoun.aicoaching.webclip</string>
+            <string>com.emreouzoun.eocoaching.webclip</string>
             <key>PayloadType</key>
             <string>com.apple.webClip.managed</string>
             <key>PayloadUUID</key>
@@ -733,13 +734,13 @@ def build_ios_mobileconfig(host_url: str) -> bytes:
         </dict>
     </array>
     <key>PayloadDescription</key>
-    <string>Installs AICoaching as a full-screen application on your iOS Home Screen.</string>
+    <string>Installs EOcoaching as a full-screen application on your iOS Home Screen.</string>
     <key>PayloadDisplayName</key>
-    <string>AICoaching (iOS App)</string>
+    <string>EOcoaching (iOS App)</string>
     <key>PayloadIdentifier</key>
-    <string>com.emreouzoun.aicoaching.profile</string>
+    <string>com.emreouzoun.eocoaching.profile</string>
     <key>PayloadOrganization</key>
-    <string>AICoaching</string>
+    <string>EOcoaching</string>
     <key>PayloadRemovalDisallowed</key>
     <false/>
     <key>PayloadType</key>
@@ -760,50 +761,50 @@ def build_platform_package(platform: str, host_url: str) -> tuple:
     downloads_dir = os.path.join(BASE_DIR, "downloads")
 
     if platform == "windows":
-        exe_path = os.path.join(downloads_dir, "EOCoaching_Windows.exe")
+        exe_path = os.path.join(downloads_dir, "EOcoachingWindows.exe")
         if os.path.exists(exe_path):
             with open(exe_path, "rb") as f:
-                return f.read(), "EOCoaching_Windows.exe", "application/vnd.microsoft.portable-executable"
+                return f.read(), "EOcoachingWindows.exe", "application/vnd.microsoft.portable-executable"
         # Fallback to ZIP archive
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("EOCoaching_App.html", build_standalone_html())
-        return buf.getvalue(), "EOCoaching_Windows.zip", "application/zip"
+            zf.writestr("EOcoachingWindows.html", build_standalone_html())
+        return buf.getvalue(), "EOcoachingWindows.zip", "application/zip"
 
     elif platform == "mac":
-        zip_path = os.path.join(downloads_dir, "EOCoaching_macOS.zip")
+        zip_path = os.path.join(downloads_dir, "EOcoachingmacOS.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "EOCoaching_macOS.zip", "application/zip"
+                return f.read(), "EOcoachingmacOS.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("EOCoaching.app/Contents/MacOS/EOCoaching", build_mac_launcher(host_url))
-            zf.writestr("EOCoaching_Offline_App.html", build_standalone_html())
-        return buf.getvalue(), "EOCoaching_macOS.zip", "application/zip"
+            zf.writestr("EOcoaching.app/Contents/MacOS/EOcoaching", build_mac_launcher(host_url))
+            zf.writestr("EOcoachingmacOS.html", build_standalone_html())
+        return buf.getvalue(), "EOcoachingmacOS.zip", "application/zip"
 
     elif platform == "ios":
-        zip_path = os.path.join(downloads_dir, "EOCoaching_iOS.zip")
+        zip_path = os.path.join(downloads_dir, "EOcoachingiOS.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "EOCoaching_iOS.zip", "application/zip"
+                return f.read(), "EOcoachingiOS.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("EOCoaching_iOS.mobileconfig", build_ios_mobileconfig(host_url))
-            zf.writestr("EOCoaching_iOS_App.html", build_standalone_html())
-        return buf.getvalue(), "EOCoaching_iOS.zip", "application/zip"
+            zf.writestr("EOcoachingiOS.mobileconfig", build_ios_mobileconfig(host_url))
+            zf.writestr("EOcoachingiOS.html", build_standalone_html())
+        return buf.getvalue(), "EOcoachingiOS.zip", "application/zip"
 
     elif platform == "android":
-        zip_path = os.path.join(downloads_dir, "EOCoaching_Android.zip")
+        zip_path = os.path.join(downloads_dir, "EOcoachingAndroid.zip")
         if os.path.exists(zip_path):
             with open(zip_path, "rb") as f:
-                return f.read(), "EOCoaching_Android.zip", "application/zip"
+                return f.read(), "EOcoachingAndroid.zip", "application/zip"
         buf = io.BytesIO()
         with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-            zf.writestr("EOCoaching_Android_App.html", build_standalone_html())
-        return buf.getvalue(), "EOCoaching_Android.zip", "application/zip"
+            zf.writestr("EOcoachingAndroid.html", build_standalone_html())
+        return buf.getvalue(), "EOcoachingAndroid.zip", "application/zip"
 
     else:
-        return build_standalone_html(), "EOCoaching_Portable_App.html", "application/octet-stream"
+        return build_standalone_html(), "EOcoachingPortable.html", "application/octet-stream"
 
 
 # ─────────────────────────────────────────────
