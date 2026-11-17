@@ -161,6 +161,14 @@ def init_db():
             PRIMARY KEY (username, friend_username)
         );
 
+        CREATE TABLE IF NOT EXISTS friend_requests (
+            sender      TEXT NOT NULL,
+            receiver    TEXT NOT NULL,
+            status      TEXT NOT NULL DEFAULT 'pending',
+            created_at  TEXT DEFAULT (datetime('now')),
+            PRIMARY KEY (sender, receiver)
+        );
+
         CREATE TABLE IF NOT EXISTS direct_messages (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             sender      TEXT NOT NULL,
@@ -482,13 +490,74 @@ def db_add_friend(data: dict, user: str = "default"):
     if not friend_raw or not re.match(r"^[a-z0-9_]+$", friend_raw):
         return {"error": "Geçerli bir arkadaş kullanıcı adı girin."}, 400
     if friend_raw == uname:
-        return {"error": "Kendinizi arkadaş olarak ekleyemezsiniz."}, 400
+        return {"error": "Kendinize arkadaşlık isteği gönderemezsiniz."}, 400
     with get_db() as conn:
         exists = conn.execute("SELECT username FROM users WHERE username=?", (friend_raw,)).fetchone()
         if not exists:
             return {"error": f"@{friend_raw} adlı kullanıcı bulunamadı."}, 404
-        conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (uname, friend_raw))
-    return {"status": "ok", "friend_username": friend_raw}, 200
+        already = conn.execute("SELECT 1 FROM friends WHERE username=? AND friend_username=?", (uname, friend_raw)).fetchone()
+        if already:
+            return {"error": f"@{friend_raw} zaten arkadaş listende."}, 409
+        reverse_req = conn.execute(
+            "SELECT 1 FROM friend_requests WHERE sender=? AND receiver=? AND status='pending'",
+            (friend_raw, uname)
+        ).fetchone()
+        if reverse_req:
+            conn.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (friend_raw, uname))
+            conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (uname, friend_raw))
+            conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (friend_raw, uname))
+            return {"status": "accepted", "message": f"@{friend_raw} ile arkadaş oldunuz!"}, 200
+        conn.execute(
+            "INSERT OR REPLACE INTO friend_requests (sender, receiver, status) VALUES (?, ?, 'pending')",
+            (uname, friend_raw)
+        )
+    return {"status": "pending", "friend_username": friend_raw, "message": f"@{friend_raw} kullanıcısına arkadaşlık isteği gönderildi!"}, 200
+
+def db_get_friend_requests(user: str = "default"):
+    uname = safe_username(user)
+    with get_db() as conn:
+        inc_rows = conn.execute("""
+            SELECT r.sender, u.profile_json, u.avatar_data
+            FROM friend_requests r
+            LEFT JOIN users u ON u.username = r.sender
+            WHERE r.receiver=? AND r.status='pending'
+            ORDER BY r.created_at DESC
+        """, (uname,)).fetchall()
+        out_rows = conn.execute("""
+            SELECT r.receiver, u.profile_json, u.avatar_data
+            FROM friend_requests r
+            LEFT JOIN users u ON u.username = r.receiver
+            WHERE r.sender=? AND r.status='pending'
+            ORDER BY r.created_at DESC
+        """, (uname,)).fetchall()
+
+    def _fmt(uname_val, prof_raw, av):
+        name = uname_val
+        try:
+            p = json.loads(prof_raw or "{}")
+            name = p.get("name") or uname_val
+        except Exception:
+            pass
+        return {"username": uname_val, "name": name, "avatar_data": av or ""}
+
+    return {
+        "incoming": [_fmt(r["sender"], r["profile_json"], r["avatar_data"]) for r in inc_rows],
+        "outgoing": [_fmt(r["receiver"], r["profile_json"], r["avatar_data"]) for r in out_rows]
+    }
+
+def db_respond_friend_request(data: dict, user: str = "default"):
+    uname = safe_username(user)
+    sender = safe_username(data.get("sender"))
+    action = (data.get("action") or "").lower()
+    if action not in ("accept", "reject"):
+        return {"error": "Geçersiz işlem."}, 400
+    with get_db() as conn:
+        conn.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (sender, uname))
+        if action == "accept":
+            conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (uname, sender))
+            conn.execute("INSERT OR IGNORE INTO friends (username, friend_username) VALUES (?, ?)", (sender, uname))
+            return {"status": "accepted", "message": f"@{sender} arkadaş listene eklendi!"}, 200
+    return {"status": "rejected", "message": f"@{sender} isteği reddedildi."}, 200
 
 def db_remove_friend(data: dict, user: str = "default"):
     uname = safe_username(user or data.get("username"))
@@ -1166,6 +1235,18 @@ if USE_FASTAPI:
         data = await request.json()
         return db_remove_friend(data, user)
 
+    @app.get("/api/social/friends/requests")
+    def social_get_requests(user: str = Query("default")):
+        return db_get_friend_requests(user)
+
+    @app.post("/api/social/friends/respond")
+    async def social_respond_request(request: Request, user: str = Query("default")):
+        data = await request.json()
+        res, code = db_respond_friend_request(data, user)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
     @app.get("/api/social/dm")
     def social_get_dm(user: str = Query("default"), peer: str = Query(...), after_id: int = Query(0)):
         return db_get_dm(user, peer, after_id)
@@ -1395,6 +1476,9 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 month = qs.get("month", [None])[0]
                 return self._send_json(db_social_calendar(month, user))
 
+            elif path == "/api/social/friends/requests":
+                return self._send_json(db_get_friend_requests(user))
+
             elif path == "/api/social/dm":
                 peer = qs.get("peer", [""])[0]
                 after_id = int(qs.get("after_id", [0])[0])
@@ -1476,6 +1560,14 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             elif path == "/api/social/friends/remove":
                 data = self._read_json()
                 return self._send_json(db_remove_friend(data, user))
+
+            elif path == "/api/social/friends/respond":
+                data = self._read_json()
+                res, code = db_respond_friend_request(data, user)
+                return self._send_json(res, code)
+
+            elif path == "/api/social/friends/requests":
+                return self._send_json(db_get_friend_requests(user))
 
             elif path == "/api/social/dm":
                 data = self._read_json()

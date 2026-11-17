@@ -243,14 +243,57 @@
 
         if (path === "/api/social/friends/add" && method === "POST") {
             if (!db.friends) db.friends = {};
+            if (!db.friendRequests) db.friendRequests = [];
             if (!db.friends[user]) db.friends[user] = [];
             const fname = (bodyData.friend_username || "").trim().toLowerCase();
             if (!fname || !/^[a-z0-9_]+$/.test(fname)) return jsonResponse({ error: "Geçerli bir kullanıcı adı girin." }, 400);
-            if (fname === user) return jsonResponse({ error: "Kendinizi arkadaş olarak ekleyemezsiniz." }, 400);
+            if (fname === user) return jsonResponse({ error: "Kendinize arkadaşlık isteği gönderemezsiniz." }, 400);
             if (!(db.auth && db.auth[fname]) && !(db.users && db.users[fname])) return jsonResponse({ error: `@${fname} adlı kullanıcı bulunamadı.` }, 404);
-            if (!db.friends[user].includes(fname)) db.friends[user].push(fname);
+            if (db.friends[user].includes(fname)) return jsonResponse({ error: `@${fname} zaten arkadaş listende.` }, 409);
+            const rev = db.friendRequests.findIndex(r => r.sender === fname && r.receiver === user);
+            if (rev >= 0) {
+                db.friendRequests.splice(rev, 1);
+                db.friends[user].push(fname);
+                if (!db.friends[fname]) db.friends[fname] = [];
+                if (!db.friends[fname].includes(user)) db.friends[fname].push(user);
+                saveLocalDB(db);
+                return jsonResponse({ status: "accepted", message: `@${fname} ile arkadaş oldunuz!` });
+            }
+            if (!db.friendRequests.some(r => r.sender === user && r.receiver === fname)) {
+                db.friendRequests.push({ sender: user, receiver: fname });
+            }
             saveLocalDB(db);
-            return jsonResponse({ status: "ok", friend_username: fname });
+            return jsonResponse({ status: "pending", friend_username: fname, message: `@${fname} kullanıcısına arkadaşlık isteği gönderildi!` });
+        }
+
+        if (path === "/api/social/friends/requests" && method === "GET") {
+            const reqs = db.friendRequests || [];
+            const authMap = db.auth || {};
+            const fmt = (uName) => ({
+                username: uName,
+                name: (db.users && db.users[uName] && db.users[uName].name) || uName,
+                avatar_data: (authMap[uName] && authMap[uName].avatar_data) || ""
+            });
+            return jsonResponse({
+                incoming: reqs.filter(r => r.receiver === user).map(r => fmt(r.sender)),
+                outgoing: reqs.filter(r => r.sender === user).map(r => fmt(r.receiver))
+            });
+        }
+
+        if (path === "/api/social/friends/respond" && method === "POST") {
+            if (!db.friendRequests) db.friendRequests = [];
+            if (!db.friends) db.friends = {};
+            const sender = (bodyData.sender || "").toLowerCase();
+            const action = bodyData.action;
+            db.friendRequests = db.friendRequests.filter(r => !(r.sender === sender && r.receiver === user));
+            if (action === "accept") {
+                if (!db.friends[user]) db.friends[user] = [];
+                if (!db.friends[sender]) db.friends[sender] = [];
+                if (!db.friends[user].includes(sender)) db.friends[user].push(sender);
+                if (!db.friends[sender].includes(user)) db.friends[sender].push(user);
+            }
+            saveLocalDB(db);
+            return jsonResponse({ status: action === "accept" ? "accepted" : "rejected" });
         }
 
         if (path === "/api/social/friends/remove" && method === "POST") {
@@ -648,14 +691,57 @@
 
         if (path === "/api/social/friends/add" && method === "POST") {
             if (!db.friends) db.friends = {};
+            if (!db.friendRequests) db.friendRequests = [];
             if (!db.friends[user]) db.friends[user] = [];
             const fname = (bodyData.friend_username || "").trim().toLowerCase();
             if (!fname || !/^[a-z0-9_]+$/.test(fname)) return jsonResponse({ error: "Geçerli bir kullanıcı adı girin." }, 400);
-            if (fname === user) return jsonResponse({ error: "Kendinizi arkadaş olarak ekleyemezsiniz." }, 400);
+            if (fname === user) return jsonResponse({ error: "Kendinize arkadaşlık isteği gönderemezsiniz." }, 400);
             if (!(db.auth && db.auth[fname]) && !(db.users && db.users[fname])) return jsonResponse({ error: `@${fname} adlı kullanıcı bulunamadı.` }, 404);
-            if (!db.friends[user].includes(fname)) db.friends[user].push(fname);
+            if (db.friends[user].includes(fname)) return jsonResponse({ error: `@${fname} zaten arkadaş listende.` }, 409);
+            const rev = db.friendRequests.findIndex(r => r.sender === fname && r.receiver === user);
+            if (rev >= 0) {
+                db.friendRequests.splice(rev, 1);
+                db.friends[user].push(fname);
+                if (!db.friends[fname]) db.friends[fname] = [];
+                if (!db.friends[fname].includes(user)) db.friends[fname].push(user);
+                saveLocalDB(db);
+                return jsonResponse({ status: "accepted", message: `@${fname} ile arkadaş oldunuz!` });
+            }
+            if (!db.friendRequests.some(r => r.sender === user && r.receiver === fname)) {
+                db.friendRequests.push({ sender: user, receiver: fname });
+            }
             saveLocalDB(db);
-            return jsonResponse({ status: "ok", friend_username: fname });
+            return jsonResponse({ status: "pending", friend_username: fname, message: `@${fname} kullanıcısına arkadaşlık isteği gönderildi!` });
+        }
+
+        if (path === "/api/social/friends/requests" && method === "GET") {
+            const reqs = db.friendRequests || [];
+            const authMap = db.auth || {};
+            const fmt = (uName) => ({
+                username: uName,
+                name: (db.users && db.users[uName] && db.users[uName].name) || uName,
+                avatar_data: (authMap[uName] && authMap[uName].avatar_data) || ""
+            });
+            return jsonResponse({
+                incoming: reqs.filter(r => r.receiver === user).map(r => fmt(r.sender)),
+                outgoing: reqs.filter(r => r.sender === user).map(r => fmt(r.receiver))
+            });
+        }
+
+        if (path === "/api/social/friends/respond" && method === "POST") {
+            if (!db.friendRequests) db.friendRequests = [];
+            if (!db.friends) db.friends = {};
+            const sender = (bodyData.sender || "").toLowerCase();
+            const action = bodyData.action;
+            db.friendRequests = db.friendRequests.filter(r => !(r.sender === sender && r.receiver === user));
+            if (action === "accept") {
+                if (!db.friends[user]) db.friends[user] = [];
+                if (!db.friends[sender]) db.friends[sender] = [];
+                if (!db.friends[user].includes(sender)) db.friends[user].push(sender);
+                if (!db.friends[sender].includes(user)) db.friends[sender].push(user);
+            }
+            saveLocalDB(db);
+            return jsonResponse({ status: action === "accept" ? "accepted" : "rejected" });
         }
 
         if (path === "/api/social/friends/remove" && method === "POST") {
@@ -3811,14 +3897,15 @@ function initSocialTab() {
                 if (res.ok) {
                     friendMsgEl.style.background = "rgba(16,185,129,0.12)";
                     friendMsgEl.style.color = "#059669";
-                    friendMsgEl.textContent = `@${fname} arkadaş listene eklendi!`;
+                    friendMsgEl.textContent = data.message || `@${fname} kullanıcısına arkadaşlık isteği gönderildi!`;
                     if (addFriendInput) addFriendInput.value = "";
+                    await loadFriendRequests();
                     await loadSocialLeaderboard();
                     await loadSocialCalendar();
                 } else {
                     friendMsgEl.style.background = "rgba(239,68,68,0.12)";
                     friendMsgEl.style.color = "#dc2626";
-                    friendMsgEl.textContent = data.detail || data.error || "Arkadaş eklenemedi.";
+                    friendMsgEl.textContent = data.detail || data.error || "Arkadaşlık isteği gönderilemedi.";
                 }
             }
         } catch (err) {
@@ -3843,10 +3930,76 @@ function initSocialTab() {
     if (socialLink) {
         socialLink.addEventListener("click", async () => {
             updateSocialMySummary();
+            await loadFriendRequests();
             await loadSocialLeaderboard();
             await loadSocialCalendar();
         });
     }
+}
+
+async function loadFriendRequests() {
+    const box = document.getElementById("social-friend-requests-box");
+    if (!box) return;
+    try {
+        const res = await fetch(apiURL("/api/social/friends/requests"));
+        if (!res.ok) return;
+        const data = await res.json();
+        const incoming = data.incoming || [];
+        const outgoing = data.outgoing || [];
+        if (incoming.length === 0 && outgoing.length === 0) {
+            box.classList.add("hidden");
+            box.innerHTML = "";
+            return;
+        }
+        box.classList.remove("hidden");
+        let html = "";
+        if (incoming.length > 0) {
+            html += `<div style="font-size:0.82rem; font-weight:700; color:var(--text-primary); margin-bottom:8px;"><i class="fa-solid fa-bell text-neon-purple"></i> Gelen Arkadaşlık İstekleri (${incoming.length})</div>`;
+            html += incoming.map(u => `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:8px 10px; margin-bottom:6px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${u.avatar_data ? `<img src="${u.avatar_data}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">` : `<span class="social-user-avatar" style="width:30px; height:30px; font-size:0.8rem;">${(u.name || "?").charAt(0).toUpperCase()}</span>`}
+                        <div><strong>${u.name}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">@${u.username}</span></div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="btn btn-primary btn-sm btn-req-accept" data-sender="${u.username}" style="background:#10b981; padding:4px 10px; font-size:0.76rem;"><i class="fa-solid fa-check"></i> Kabul Et</button>
+                        <button type="button" class="btn btn-secondary btn-sm btn-req-reject" data-sender="${u.username}" style="color:#dc2626; border-color:rgba(239,68,68,0.35); padding:4px 10px; font-size:0.76rem;"><i class="fa-solid fa-xmark"></i> Reddet</button>
+                    </div>
+                </div>
+            `).join("");
+        }
+        if (outgoing.length > 0) {
+            html += `<div style="font-size:0.75rem; color:var(--text-secondary); margin-top:4px;">Onay bekleyen gönderilen istekler: ${outgoing.map(u => `<strong>@${u.username}</strong>`).join(", ")}</div>`;
+        }
+        box.innerHTML = html;
+
+        box.querySelectorAll(".btn-req-accept").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                await respondFriendRequest(btn.getAttribute("data-sender"), "accept");
+            });
+        });
+        box.querySelectorAll(".btn-req-reject").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                await respondFriendRequest(btn.getAttribute("data-sender"), "reject");
+            });
+        });
+    } catch (e) { }
+}
+
+async function respondFriendRequest(sender, action) {
+    try {
+        const res = await fetch(apiURL("/api/social/friends/respond"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sender, action })
+        });
+        if (res.ok) {
+            showToast(action === "accept" ? `✅ @${sender} ile arkadaş oldunuz!` : `❌ @${sender} isteği reddedildi.`);
+            await loadFriendRequests();
+            await loadSocialLeaderboard();
+            await loadSocialCalendar();
+        }
+    } catch (e) { }
 }
 
 function updateSocialMySummary() {
