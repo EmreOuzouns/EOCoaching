@@ -177,6 +177,110 @@
             return jsonResponse({ streak: dates.length > 0 ? 1 : 0, total_days: dates.length });
         }
 
+        if (path === "/api/auth/register" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || "").trim().toLowerCase();
+            const pw = bodyData.password || "";
+            if (!uname || !/^[a-z0-9_]+$/.test(uname)) return jsonResponse({ error: "Geçerli kullanıcı adı girin." }, 400);
+            if (pw.length < 3) return jsonResponse({ error: "Şifre en az 3 karakter olmalı." }, 400);
+            if (db.auth[uname]) return jsonResponse({ error: "Bu kullanıcı adı zaten kayıtlı." }, 409);
+            db.auth[uname] = { password: pw, avatar_data: bodyData.avatar_data || "", last_seen: new Date().toISOString() };
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", username: uname, avatar_data: db.auth[uname].avatar_data });
+        }
+
+        if (path === "/api/auth/login" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || "").trim().toLowerCase();
+            const pw = bodyData.password || "";
+            if (!db.auth[uname] && !db.users[uname]) return jsonResponse({ error: "Kullanıcı bulunamadı. Lütfen önce Kayıt Olun." }, 404);
+            if (db.auth[uname] && db.auth[uname].password !== pw) return jsonResponse({ error: "Kullanıcı adı veya şifre hatalı." }, 401);
+            if (!db.auth[uname]) db.auth[uname] = { password: pw, avatar_data: "", last_seen: new Date().toISOString() };
+            db.auth[uname].last_seen = new Date().toISOString();
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", username: uname, avatar_data: db.auth[uname].avatar_data || "" });
+        }
+
+        if (path === "/api/auth/avatar" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            if (!db.auth[uname]) db.auth[uname] = { password: "", avatar_data: "", last_seen: new Date().toISOString() };
+            db.auth[uname].avatar_data = bodyData.avatar_data || "";
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", avatar_data: db.auth[uname].avatar_data });
+        }
+
+        if (path === "/api/auth/heartbeat" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            if (db.auth[uname]) {
+                db.auth[uname].last_seen = new Date().toISOString();
+                saveLocalDB(db);
+            }
+            return jsonResponse({ status: "ok" });
+        }
+
+        if (path === "/api/social/users") {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const authMap = db.auth || {};
+            const list = Object.keys(db.users || {}).map(uname => {
+                const prof = db.users[uname] || {};
+                if (prof.privacy === "private") return null;
+                const todayLog = (db.logs[uname] && db.logs[uname][todayStr]) || {};
+                const nut = todayLog.nutrition || {};
+                return {
+                    username: uname,
+                    name: prof.name || uname,
+                    avatar_data: (authMap[uname] && authMap[uname].avatar_data) || prof.avatar_data || "",
+                    is_online: true,
+                    weight: prof.weight || 70,
+                    height: prof.height || 170,
+                    age: prof.age || 23,
+                    prs: prof.prs || {},
+                    workout: prof.workoutTemplate,
+                    today_nutrition: {
+                        calories: nut.calories || 0,
+                        protein: nut.protein || 0,
+                        carbs: nut.carbs || 0,
+                        fat: nut.fat || 0,
+                        meals_count: (todayLog.meals || []).length
+                    }
+                };
+            }).filter(Boolean);
+            return jsonResponse(list);
+        }
+
+        if (path === "/api/social/calendar") {
+            const month = u.searchParams.get("month") || new Date().toISOString().slice(0, 7);
+            const authMap = db.auth || {};
+            const days = {};
+            Object.keys(db.logs || {}).forEach(uname => {
+                const prof = (db.users && db.users[uname]) || {};
+                if (prof.privacy === "private") return;
+                const uLogs = db.logs[uname] || {};
+                Object.keys(uLogs).forEach(d => {
+                    if (!d.startsWith(month)) return;
+                    const log = uLogs[d] || {};
+                    const nut = log.nutrition || {};
+                    const cal = parseInt(nut.calories || 0, 10);
+                    if (cal === 0 && !(log.meals || []).length) return;
+                    if (!days[d]) days[d] = [];
+                    days[d].push({
+                        username: uname,
+                        name: prof.name || uname,
+                        avatar_data: (authMap[uname] && authMap[uname].avatar_data) || "",
+                        calories: cal,
+                        protein: parseInt(nut.protein || 0, 10),
+                        carbs: parseInt(nut.carbs || 0, 10),
+                        fat: parseInt(nut.fat || 0, 10),
+                        meals_count: (log.meals || []).length,
+                        workout_done: Boolean(log.workout)
+                    });
+                });
+            });
+            return jsonResponse({ month, days });
+        }
+
         if (path === "/api/network-info") {
             return jsonResponse({
                 lan_ip: "localhost",
@@ -404,6 +508,110 @@
         if (path === "/api/stats/streak") {
             const dates = Object.keys(db.logs[user] || {}).sort().reverse();
             return jsonResponse({ streak: dates.length > 0 ? 1 : 0, total_days: dates.length });
+        }
+
+        if (path === "/api/auth/register" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || "").trim().toLowerCase();
+            const pw = bodyData.password || "";
+            if (!uname || !/^[a-z0-9_]+$/.test(uname)) return jsonResponse({ error: "Geçerli kullanıcı adı girin." }, 400);
+            if (pw.length < 3) return jsonResponse({ error: "Şifre en az 3 karakter olmalı." }, 400);
+            if (db.auth[uname]) return jsonResponse({ error: "Bu kullanıcı adı zaten kayıtlı." }, 409);
+            db.auth[uname] = { password: pw, avatar_data: bodyData.avatar_data || "", last_seen: new Date().toISOString() };
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", username: uname, avatar_data: db.auth[uname].avatar_data });
+        }
+
+        if (path === "/api/auth/login" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || "").trim().toLowerCase();
+            const pw = bodyData.password || "";
+            if (!db.auth[uname] && !db.users[uname]) return jsonResponse({ error: "Kullanıcı bulunamadı. Lütfen önce Kayıt Olun." }, 404);
+            if (db.auth[uname] && db.auth[uname].password !== pw) return jsonResponse({ error: "Kullanıcı adı veya şifre hatalı." }, 401);
+            if (!db.auth[uname]) db.auth[uname] = { password: pw, avatar_data: "", last_seen: new Date().toISOString() };
+            db.auth[uname].last_seen = new Date().toISOString();
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", username: uname, avatar_data: db.auth[uname].avatar_data || "" });
+        }
+
+        if (path === "/api/auth/avatar" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            if (!db.auth[uname]) db.auth[uname] = { password: "", avatar_data: "", last_seen: new Date().toISOString() };
+            db.auth[uname].avatar_data = bodyData.avatar_data || "";
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", avatar_data: db.auth[uname].avatar_data });
+        }
+
+        if (path === "/api/auth/heartbeat" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            if (db.auth[uname]) {
+                db.auth[uname].last_seen = new Date().toISOString();
+                saveLocalDB(db);
+            }
+            return jsonResponse({ status: "ok" });
+        }
+
+        if (path === "/api/social/users") {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const authMap = db.auth || {};
+            const list = Object.keys(db.users || {}).map(uname => {
+                const prof = db.users[uname] || {};
+                if (prof.privacy === "private") return null;
+                const todayLog = (db.logs[uname] && db.logs[uname][todayStr]) || {};
+                const nut = todayLog.nutrition || {};
+                return {
+                    username: uname,
+                    name: prof.name || uname,
+                    avatar_data: (authMap[uname] && authMap[uname].avatar_data) || prof.avatar_data || "",
+                    is_online: true,
+                    weight: prof.weight || 70,
+                    height: prof.height || 170,
+                    age: prof.age || 23,
+                    prs: prof.prs || {},
+                    workout: prof.workoutTemplate,
+                    today_nutrition: {
+                        calories: nut.calories || 0,
+                        protein: nut.protein || 0,
+                        carbs: nut.carbs || 0,
+                        fat: nut.fat || 0,
+                        meals_count: (todayLog.meals || []).length
+                    }
+                };
+            }).filter(Boolean);
+            return jsonResponse(list);
+        }
+
+        if (path === "/api/social/calendar") {
+            const month = u.searchParams.get("month") || new Date().toISOString().slice(0, 7);
+            const authMap = db.auth || {};
+            const days = {};
+            Object.keys(db.logs || {}).forEach(uname => {
+                const prof = (db.users && db.users[uname]) || {};
+                if (prof.privacy === "private") return;
+                const uLogs = db.logs[uname] || {};
+                Object.keys(uLogs).forEach(d => {
+                    if (!d.startsWith(month)) return;
+                    const log = uLogs[d] || {};
+                    const nut = log.nutrition || {};
+                    const cal = parseInt(nut.calories || 0, 10);
+                    if (cal === 0 && !(log.meals || []).length) return;
+                    if (!days[d]) days[d] = [];
+                    days[d].push({
+                        username: uname,
+                        name: prof.name || uname,
+                        avatar_data: (authMap[uname] && authMap[uname].avatar_data) || "",
+                        calories: cal,
+                        protein: parseInt(nut.protein || 0, 10),
+                        carbs: parseInt(nut.carbs || 0, 10),
+                        fat: parseInt(nut.fat || 0, 10),
+                        meals_count: (log.meals || []).length,
+                        workout_done: Boolean(log.workout)
+                    });
+                });
+            });
+            return jsonResponse({ month, days });
         }
 
         if (path === "/api/network-info") {
@@ -3132,20 +3340,107 @@ async function finishWorkoutSession() {
     alert("Tebrikler kral! Antrenmanı başarıyla bitirdin ve tüm seti kaydettik. Muhteşem iş çıkardın! 💪🔥");
 }
 
-// 16. Giriş & Profil Seçimi Oturumu Yönetimi
+// Helper: Compress image file to 160x160 JPEG base64 data URL (works on all OS & mobile galleries)
+function compressAvatarFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const size = 160;
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext("2d");
+                const minSide = Math.min(img.width, img.height);
+                const sx = (img.width - minSide) / 2;
+                const sy = (img.height - minSide) / 2;
+                ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+                resolve(canvas.toDataURL("image/jpeg", 0.82));
+            };
+            img.onerror = reject;
+            img.src = ev.target.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// 16. Giriş, Kayıt Ol, Şifre & Profil Fotoğrafı Yönetimi
 async function initLoginSession() {
     const loginOverlay = document.getElementById("login-overlay");
-    const userSelect = document.getElementById("login-user-select");
-    const usernameInput = document.getElementById("login-username-input");
-    const usernameGroup = document.getElementById("login-username-group");
+    const tabLoginBtn = document.getElementById("tab-auth-login");
+    const tabRegBtn = document.getElementById("tab-auth-register");
+    const loginPanel = document.getElementById("auth-login-panel");
+    const regPanel = document.getElementById("auth-register-panel");
+    const errBox = document.getElementById("auth-error-msg");
+
+    const loginUserInput = document.getElementById("login-username-input");
+    const loginPassInput = document.getElementById("login-password-input");
+    const loginRemember = document.getElementById("login-remember-check");
     const loginSubmitBtn = document.getElementById("btn-login-submit");
+
+    const regUserInput = document.getElementById("reg-username-input");
+    const regPassInput = document.getElementById("reg-password-input");
+    const regRemember = document.getElementById("reg-remember-check");
+    const regSubmitBtn = document.getElementById("btn-register-submit");
+    const regAvatarPreview = document.getElementById("reg-avatar-preview");
+    const regAvatarFileBtn = document.getElementById("btn-reg-avatar-file");
+    const regAvatarFile = document.getElementById("reg-avatar-file");
+    const regAvatarUrl = document.getElementById("reg-avatar-url");
+    let pendingAvatarData = "";
+
+    function showAuthError(msg) {
+        if (!errBox) return alert(msg);
+        errBox.textContent = msg;
+        errBox.classList.remove("hidden");
+    }
+    function clearAuthError() {
+        errBox?.classList.add("hidden");
+    }
+
+    tabLoginBtn?.addEventListener("click", () => {
+        clearAuthError();
+        tabLoginBtn.className = "btn btn-primary btn-sm";
+        tabRegBtn.className = "btn btn-secondary btn-sm";
+        loginPanel?.classList.remove("hidden");
+        regPanel?.classList.add("hidden");
+    });
+    tabRegBtn?.addEventListener("click", () => {
+        clearAuthError();
+        tabRegBtn.className = "btn btn-primary btn-sm";
+        tabLoginBtn.className = "btn btn-secondary btn-sm";
+        regPanel?.classList.remove("hidden");
+        loginPanel?.classList.add("hidden");
+    });
+
+    regAvatarFileBtn?.addEventListener("click", () => regAvatarFile?.click());
+    regAvatarFile?.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+            pendingAvatarData = await compressAvatarFile(file);
+            if (regAvatarPreview) regAvatarPreview.src = pendingAvatarData;
+            if (regAvatarUrl) regAvatarUrl.value = "";
+        } catch (err) {
+            showAuthError("Fotoğraf yüklenemedi.");
+        }
+    });
+    regAvatarUrl?.addEventListener("input", () => {
+        const url = regAvatarUrl.value.trim();
+        if (url) {
+            pendingAvatarData = url;
+            if (regAvatarPreview) regAvatarPreview.src = url;
+        }
+    });
 
     // Oturumu kapatma
     const logoutBtn = document.getElementById("btn-logout");
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
-            if (confirm("Oturumu kapatmak ve kullanıcı seçim ekranına dönmek istiyor musunuz?")) {
+            if (confirm("Oturumu kapatmak ve giriş ekranına dönmek istiyor musunuz?")) {
                 sessionStorage.removeItem("active_username");
+                localStorage.removeItem("remembered_user");
                 localStorage.removeItem("active_username");
                 state.username = null;
                 state.profile = null;
@@ -3155,98 +3450,211 @@ async function initLoginSession() {
         });
     }
 
-    // Seçim değişince input alanını göster/gizle
-    if (userSelect && usernameGroup) {
-        userSelect.addEventListener("change", () => {
-            if (userSelect.value === "") {
-                usernameGroup.classList.remove("hidden");
-            } else {
-                usernameGroup.classList.add("hidden");
-            }
-        });
+    function startHeartbeat(username) {
+        const ping = () => fetch("/api/auth/heartbeat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+        }).catch(() => {});
+        ping();
+        setInterval(ping, 60000);
     }
 
-    // Sistemdeki kayıtlı tüm kullanıcıları listele
-    try {
-        const res = await fetch("/api/users/list");
-        if (res.ok) {
-            const users = await res.json();
-            userSelect.innerHTML = '<option value="">-- Yeni Kullanıcı Oluştur --</option>';
-            users.forEach(u => {
-                const opt = document.createElement("option");
-                opt.value = u;
-                opt.textContent = u === "default" ? "Varsayılan (default)" : u;
-                userSelect.appendChild(opt);
-            });
+    async function completeAuth(username, remember, avatarData) {
+        sessionStorage.setItem("active_username", username);
+        if (remember) {
+            localStorage.setItem("remembered_user", username);
+        } else {
+            localStorage.removeItem("remembered_user");
         }
-    } catch (e) {
-        console.error("Kullanıcı listesi alınamadı:", e);
-    }
-
-    const storedUser = sessionStorage.getItem("active_username");
-    if (storedUser) {
-        state.username = storedUser;
+        if (avatarData) {
+            localStorage.setItem(`avatar_${username}`, avatarData);
+        }
+        state.username = username;
         loginOverlay.classList.add("hidden");
+        startHeartbeat(username);
+
+        const obNameInput = document.getElementById("ob-name");
+        if (obNameInput && !obNameInput.value) {
+            obNameInput.value = username;
+        }
         await checkProfile();
         initSocialTab();
         initClockAndSleepTracker();
-    } else {
-        loginOverlay.classList.remove("hidden");
-
-        loginSubmitBtn.addEventListener("click", async () => {
-            let chosenUser = userSelect.value;
-            if (!chosenUser) {
-                const typed = usernameInput.value.trim().toLowerCase();
-                if (!typed) {
-                    alert("Lütfen bir kullanıcı adı girin veya listeden seçin.");
-                    return;
-                }
-                if (!/^[a-zA-Z0-9_]+$/.test(typed)) {
-                    alert("Kullanıcı adı sadece harf, rakam ve alt çizgi (_) içerebilir!");
-                    return;
-                }
-                chosenUser = typed;
-            }
-
-            sessionStorage.setItem("active_username", chosenUser);
-            state.username = chosenUser;
-            loginOverlay.classList.add("hidden");
-
-            // Eğer onboarding inputlarında ad alanı boşsa kullanıcı adını yazalım
-            const obNameInput = document.getElementById("ob-name");
-            if (obNameInput && !obNameInput.value) {
-                obNameInput.value = chosenUser;
-            }
-
-            await checkProfile();
-            initSocialTab();
-            initClockAndSleepTracker();
-        });
     }
+
+    const autoUser = sessionStorage.getItem("active_username") || localStorage.getItem("remembered_user");
+    if (autoUser) {
+        state.username = autoUser;
+        loginOverlay.classList.add("hidden");
+        startHeartbeat(autoUser);
+        await checkProfile();
+        initSocialTab();
+        initClockAndSleepTracker();
+        return;
+    }
+
+    loginOverlay.classList.remove("hidden");
+
+    loginSubmitBtn?.addEventListener("click", async () => {
+        clearAuthError();
+        const username = (loginUserInput?.value || "").trim().toLowerCase();
+        const password = loginPassInput?.value || "";
+        if (!username || !password) {
+            showAuthError("Kullanıcı adı ve şifre girin.");
+            return;
+        }
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showAuthError(data.detail || data.error || "Giriş başarısız.");
+                return;
+            }
+            await completeAuth(data.username, Boolean(loginRemember?.checked), data.avatar_data);
+        } catch (err) {
+            showAuthError("Sunucuya bağlanılamadı.");
+        }
+    });
+
+    regSubmitBtn?.addEventListener("click", async () => {
+        clearAuthError();
+        const username = (regUserInput?.value || "").trim().toLowerCase();
+        const password = regPassInput?.value || "";
+        if (!username || !/^[a-zA-Z0-9_]+$/.test(username)) {
+            showAuthError("Kullanıcı adı sadece harf, rakam ve alt çizgi (_) içerebilir!");
+            return;
+        }
+        if (password.length < 3) {
+            showAuthError("Şifre en az 3 karakter olmalıdır.");
+            return;
+        }
+        try {
+            const res = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password, avatar_data: pendingAvatarData })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showAuthError(data.detail || data.error || "Kayıt başarısız.");
+                return;
+            }
+            await completeAuth(data.username, Boolean(regRemember?.checked), data.avatar_data);
+        } catch (err) {
+            showAuthError("Kayıt sırasında hata oluştu.");
+        }
+    });
 }
 
-// 17. Sosyal Panel & Liderlik Tablosu
+// 17. Sosyal Panel, Çevrimiçi Arkadaşlar & Kalori Takvimi
+let socialCalDate = new Date();
+
 function initSocialTab() {
     const detailModal = document.getElementById("social-user-modal");
     const closeDetailBtn = document.getElementById("btn-close-social-modal");
-
     if (closeDetailBtn && detailModal) {
         closeDetailBtn.addEventListener("click", () => detailModal.classList.add("hidden"));
     }
 
+    const dayModal = document.getElementById("social-day-modal");
+    const closeDayBtn = document.getElementById("btn-close-social-day-modal");
+    if (closeDayBtn && dayModal) {
+        closeDayBtn.addEventListener("click", () => dayModal.classList.add("hidden"));
+    }
+
+    // Avatar change inside Social tab
+    const changeAvatarBtn = document.getElementById("btn-social-change-avatar");
+    const avatarFileInput = document.getElementById("social-avatar-file");
+    changeAvatarBtn?.addEventListener("click", () => avatarFileInput?.click());
+    avatarFileInput?.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file || !state.username) return;
+        try {
+            const avatarData = await compressAvatarFile(file);
+            await fetch("/api/auth/avatar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: state.username, avatar_data: avatarData })
+            });
+            localStorage.setItem(`avatar_${state.username}`, avatarData);
+            const myAvatarEl = document.getElementById("social-my-avatar");
+            if (myAvatarEl) myAvatarEl.src = avatarData;
+            showToast("📸 Profil fotoğrafın güncellendi!");
+            await loadSocialLeaderboard();
+        } catch (err) {
+            showToast("Fotoğraf güncellenemedi.");
+        }
+    });
+
+    // Calendar month navigation & filter
+    document.getElementById("btn-cal-prev")?.addEventListener("click", () => {
+        socialCalDate = new Date(socialCalDate.getFullYear(), socialCalDate.getMonth() - 1, 1);
+        loadSocialCalendar();
+    });
+    document.getElementById("btn-cal-next")?.addEventListener("click", () => {
+        socialCalDate = new Date(socialCalDate.getFullYear(), socialCalDate.getMonth() + 1, 1);
+        loadSocialCalendar();
+    });
+    document.getElementById("social-cal-user-filter")?.addEventListener("change", () => {
+        loadSocialCalendar();
+    });
+
     const socialLink = document.querySelector('.nav-link[data-tab="social"]');
     if (socialLink) {
         socialLink.addEventListener("click", async () => {
+            updateSocialMySummary();
             await loadSocialLeaderboard();
+            await loadSocialCalendar();
         });
     }
 }
 
+function updateSocialMySummary() {
+    const uname = state.username || "default";
+    const prof = state.profile || {};
+    const nut = (state.dailyLog && state.dailyLog.nutrition) || {};
+    const myNameEl = document.getElementById("social-my-name");
+    const myUserEl = document.getElementById("social-my-username");
+    const myAvatarEl = document.getElementById("social-my-avatar");
+    if (myNameEl) myNameEl.textContent = prof.name || uname;
+    if (myUserEl) myUserEl.textContent = `@${uname}`;
+    const savedAvatar = localStorage.getItem(`avatar_${uname}`) || prof.avatar_data;
+    if (myAvatarEl && savedAvatar) myAvatarEl.src = savedAvatar;
+
+    const calEl = document.getElementById("social-my-cal");
+    const proEl = document.getElementById("social-my-pro");
+    const carbEl = document.getElementById("social-my-carb");
+    const fatEl = document.getElementById("social-my-fat");
+    if (calEl) calEl.textContent = `${Math.round(nut.calories || 0)} kcal`;
+    if (proEl) proEl.textContent = `${Math.round(nut.protein || 0)} g`;
+    if (carbEl) carbEl.textContent = `${Math.round(nut.carbs || 0)} g`;
+    if (fatEl) fatEl.textContent = `${Math.round(nut.fat || 0)} g`;
+}
+
+function renderAvatarHtml(user, size = 36) {
+    const firstLetter = (user.name || user.username || "?").charAt(0).toUpperCase();
+    const imgHtml = user.avatar_data
+        ? `<img src="${user.avatar_data}" alt="${firstLetter}" style="width:${size}px; height:${size}px; border-radius:50%; object-fit:cover; border:2px solid rgba(249,115,22,0.4);">`
+        : `<span class="social-user-avatar" style="width:${size}px; height:${size}px; font-size:${Math.round(size * 0.45)}px;">${firstLetter}</span>`;
+    const dotColor = user.is_online ? "#10b981" : "#94a3b8";
+    return `<div style="position:relative; display:inline-flex; flex-shrink:0;">
+        ${imgHtml}
+        <span title="${user.is_online ? 'Çevrimiçi' : 'Çevrimdışı'}" style="position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; background:${dotColor}; border:2px solid #fff;"></span>
+    </div>`;
+}
+
 async function loadSocialLeaderboard() {
     const leaderboardBody = document.getElementById("social-leaderboard-body");
+    const onlineCountEl = document.getElementById("social-online-count");
+    const filterSelect = document.getElementById("social-cal-user-filter");
     if (!leaderboardBody) return;
 
-    leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Liderlik tablosu yükleniyor...</td></tr>`;
+    leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Yükleniyor...</td></tr>`;
 
     try {
         const res = await fetch("/api/social/users");
@@ -3256,8 +3664,30 @@ async function loadSocialLeaderboard() {
             users.forEach(u => {
                 u.prs = u.prs || {};
                 u.totalPR = (u.prs.squat || 0) + (u.prs.bench_press || 0) + (u.prs.deadlift || 0);
+                if (u.username === state.username && u.avatar_data) {
+                    localStorage.setItem(`avatar_${u.username}`, u.avatar_data);
+                    const myAvatarEl = document.getElementById("social-my-avatar");
+                    if (myAvatarEl) myAvatarEl.src = u.avatar_data;
+                }
             });
-            users.sort((a, b) => b.totalPR - a.totalPR);
+            users.sort((a, b) => (b.is_online ? 1 : 0) - (a.is_online ? 1 : 0) || b.totalPR - a.totalPR);
+
+            if (onlineCountEl) {
+                const onlineNum = users.filter(u => u.is_online).length;
+                onlineCountEl.textContent = `${onlineNum} Çevrimiçi / ${users.length} Kişi`;
+            }
+
+            if (filterSelect) {
+                const prev = filterSelect.value;
+                filterSelect.innerHTML = `<option value="all">Tümü (Ben & Arkadaşlar)</option>`;
+                users.forEach(u => {
+                    const opt = document.createElement("option");
+                    opt.value = u.username;
+                    opt.textContent = `${u.name} (@${u.username})`;
+                    filterSelect.appendChild(opt);
+                });
+                if ([...filterSelect.options].some(o => o.value === prev)) filterSelect.value = prev;
+            }
 
             if (users.length === 0) {
                 leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px; color:var(--text-muted);">Hiç herkese açık kullanıcı bulunamadı.</td></tr>`;
@@ -3270,7 +3700,7 @@ async function loadSocialLeaderboard() {
                 tr.style.cursor = "pointer";
                 tr.addEventListener("click", () => showSocialUserDetail(user));
 
-                const firstLetter = user.name.charAt(0).toUpperCase();
+                const nut = user.today_nutrition || {};
                 const squatVal = user.prs.squat ? `${user.prs.squat} kg` : "-";
                 const benchVal = user.prs.bench_press ? `${user.prs.bench_press} kg` : "-";
                 const deadliftVal = user.prs.deadlift ? `${user.prs.deadlift} kg` : "-";
@@ -3278,14 +3708,17 @@ async function loadSocialLeaderboard() {
                 tr.innerHTML = `
                     <td style="padding: 12px 8px;">
                         <div class="social-user-cell">
-                            <span class="social-user-avatar">${firstLetter}</span>
+                            ${renderAvatarHtml(user, 38)}
                             <div>
-                                <strong style="color:var(--text-primary); display:block;">${user.name}</strong>
-                                <span style="font-size:0.75rem; color:var(--text-muted);">@${user.username}</span>
+                                <strong style="color:var(--text-primary); display:block;">${user.name} ${user.username === state.username ? '<span style="font-size:0.7rem; color:var(--neon-orange);">(Sen)</span>' : ''}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">@${user.username} · ${user.is_online ? '<span style="color:#059669;">Çevrimiçi</span>' : 'Çevrimdışı'}</span>
                             </div>
                         </div>
                     </td>
-                    <td style="padding: 12px 8px; color:var(--text-secondary);">${user.height} cm / ${user.weight} kg</td>
+                    <td style="padding: 12px 8px;">
+                        <strong style="color:var(--neon-orange); font-size:0.92rem;">${Math.round(nut.calories || 0)} kcal</strong>
+                        <div style="font-size:0.74rem; color:var(--text-secondary);">P: ${Math.round(nut.protein || 0)}g · K: ${Math.round(nut.carbs || 0)}g · Y: ${Math.round(nut.fat || 0)}g</div>
+                    </td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.squat ? 'pr-badge' : ''}">${squatVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.bench_press ? 'pr-badge' : ''}">${benchVal}</span></td>
                     <td style="padding: 12px 8px; text-align: center;"><span class="${user.prs.deadlift ? 'pr-badge' : ''}">${deadliftVal}</span></td>
@@ -3299,6 +3732,91 @@ async function loadSocialLeaderboard() {
     } catch (e) {
         leaderboardBody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:20px; color:var(--neon-red);">Bağlantı hatası: ${e.message}</td></tr>`;
     }
+}
+
+async function loadSocialCalendar() {
+    const gridEl = document.getElementById("social-calendar-grid");
+    const monthLabelEl = document.getElementById("social-cal-month-label");
+    const filterUser = document.getElementById("social-cal-user-filter")?.value || "all";
+    if (!gridEl || !monthLabelEl) return;
+
+    const year = socialCalDate.getFullYear();
+    const monthIdx = socialCalDate.getMonth();
+    const monthStr = `${year}-${String(monthIdx + 1).padStart(2, "0")}`;
+    const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    monthLabelEl.textContent = `${monthNames[monthIdx]} ${year}`;
+
+    let daysMap = {};
+    try {
+        const res = await fetch(`/api/social/calendar?month=${monthStr}`);
+        if (res.ok) {
+            const payload = await res.json();
+            daysMap = payload.days || {};
+        }
+    } catch (e) { }
+
+    gridEl.innerHTML = "";
+    const firstDay = new Date(year, monthIdx, 1).getDay(); // 0=Sun..6=Sat
+    const startOffset = (firstDay + 6) % 7; // Mon=0..Sun=6
+    const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+
+    for (let i = 0; i < startOffset; i++) {
+        const empty = document.createElement("div");
+        empty.style.minHeight = "64px";
+        gridEl.appendChild(empty);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateKey = `${monthStr}-${String(day).padStart(2, "0")}`;
+        const rawList = daysMap[dateKey] || [];
+        const entries = filterUser === "all" ? rawList : rawList.filter(x => x.username === filterUser);
+
+        const cell = document.createElement("div");
+        cell.style.cssText = `min-height:68px; border:1px solid var(--border-color); border-radius:10px; padding:6px; cursor:pointer; background:${entries.length ? 'rgba(249,115,22,0.06)' : '#fff'}; transition:transform 0.15s; display:flex; flex-direction:column; justify-content:space-between;`;
+
+        let chipsHtml = "";
+        entries.slice(0, 2).forEach(item => {
+            chipsHtml += `<div style="font-size:0.66rem; background:rgba(249,115,22,0.14); color:#c2410c; border-radius:5px; padding:1px 4px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:700;">${item.name.split(" ")[0]}: ${item.calories} kcal</div>`;
+        });
+        if (entries.length > 2) {
+            chipsHtml += `<div style="font-size:0.62rem; color:var(--text-muted); margin-top:2px;">+${entries.length - 2} kişi daha</div>`;
+        }
+
+        cell.innerHTML = `<div style="font-size:0.78rem; font-weight:700; color:var(--text-primary);">${day}</div><div>${chipsHtml}</div>`;
+        cell.addEventListener("click", () => openSocialDayModal(dateKey, entries));
+        gridEl.appendChild(cell);
+    }
+}
+
+function openSocialDayModal(dateKey, entries) {
+    const modal = document.getElementById("social-day-modal");
+    const titleEl = document.getElementById("social-day-modal-title");
+    const bodyEl = document.getElementById("social-day-modal-body");
+    if (!modal || !titleEl || !bodyEl) return;
+
+    const [y, m, d] = dateKey.split("-");
+    titleEl.textContent = `📅 ${d}/${m}/${y} — Kalori & Makro Detayları`;
+
+    if (!entries || entries.length === 0) {
+        bodyEl.innerHTML = `<p class="subtitle" style="text-align:center; padding:20px;">Bu tarihte kayıtlı kalori/öğün verisi bulunmuyor.</p>`;
+    } else {
+        bodyEl.innerHTML = entries.map(item => `
+            <div style="background:#fff; border:1px solid var(--border-color); border-radius:12px; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    ${item.avatar_data ? `<img src="${item.avatar_data}" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">` : `<span class="social-user-avatar">${(item.name || "?").charAt(0).toUpperCase()}</span>`}
+                    <div>
+                        <strong style="color:var(--text-primary); display:block;">${item.name}</strong>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">@${item.username} · ${item.meals_count} öğün ${item.workout_done ? '· 🏋️ Antrenman yapıldı' : ''}</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <strong style="color:var(--neon-orange); font-size:1rem;">${item.calories} kcal</strong>
+                    <div style="font-size:0.76rem; color:var(--text-secondary);">Protein: ${item.protein}g · Karb: ${item.carbs}g · Yağ: ${item.fat}g</div>
+                </div>
+            </div>
+        `).join("");
+    }
+    modal.classList.remove("hidden");
 }
 
 function showSocialUserDetail(user) {

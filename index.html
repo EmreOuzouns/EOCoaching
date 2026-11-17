@@ -35,31 +35,79 @@
 <body>
     <div class="app-container">
 
-        <!-- Login / User Selection Overlay -->
+        <!-- Login / Register Overlay -->
         <div id="login-overlay" class="overlay">
-            <div class="glass-card onboarding-card fade-in" style="max-width: 420px; width: 100%;">
+            <div class="glass-card onboarding-card fade-in" style="max-width: 440px; width: 100%;">
                 <h2 style="text-align: center; display:flex; align-items:center; justify-content:center; gap:8px;">
                     <img src="/icons/icon-192.png" alt="EOCoaching Logo" style="width:32px; height:32px; border-radius:50%;">
                     <span>EmreOuzoun AI Coach</span>
                 </h2>
-                <p class="subtitle text-center">Giriş yapın, profil seçin veya yeni bir kullanıcı oluşturun.</p>
+                <p class="subtitle text-center" style="margin-bottom:14px;">Hesabınıza giriş yapın veya saniyeler içinde yeni hesap oluşturun.</p>
 
-                <div class="form-group mt-20">
-                    <label for="login-user-select">Kayıtlı Profil Seçin</label>
-                    <select id="login-user-select" style="width:100%;">
-                        <option value="">-- Yeni Kullanıcı Oluştur --</option>
-                    </select>
+                <!-- Auth Mode Tabs -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; background:rgba(15,23,42,0.06); padding:5px; border-radius:12px; margin-bottom:16px;">
+                    <button type="button" id="tab-auth-login" class="btn btn-primary btn-sm" style="width:100%;">
+                        <i class="fa-solid fa-right-to-bracket"></i> Giriş Yap
+                    </button>
+                    <button type="button" id="tab-auth-register" class="btn btn-secondary btn-sm" style="width:100%;">
+                        <i class="fa-solid fa-user-plus"></i> Kayıt Ol
+                    </button>
                 </div>
 
-                <div class="form-group mt-15" id="login-username-group">
-                    <label for="login-username-input">Yeni Kullanıcı Adı</label>
-                    <input type="text" id="login-username-input" placeholder="Örn: sporcu1" style="width:100%;">
-                    <p class="subtitle" style="font-size:0.7rem; margin-top:4px;">Sadece harf, rakam ve alt çizgi (_)
-                        kullanın.</p>
+                <div id="auth-error-msg" class="hidden" style="background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3); padding:8px 12px; border-radius:8px; font-size:0.82rem; font-weight:700; margin-bottom:12px;"></div>
+
+                <!-- LOGIN PANEL -->
+                <div id="auth-login-panel">
+                    <div class="form-group">
+                        <label for="login-username-input">Kullanıcı Adı</label>
+                        <input type="text" id="login-username-input" placeholder="Kullanıcı adınızı girin" style="width:100%;" autocomplete="username">
+                    </div>
+                    <div class="form-group mt-10">
+                        <label for="login-password-input">Şifre</label>
+                        <input type="password" id="login-password-input" placeholder="Şifrenizi girin" style="width:100%;" autocomplete="current-password">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:0.85rem; cursor:pointer; color:var(--text-secondary);">
+                        <input type="checkbox" id="login-remember-check" style="width:16px; height:16px; accent-color:var(--neon-orange);">
+                        <span>Beni Hatırla (Sonraki girişte şifre sorma)</span>
+                    </label>
+                    <button type="button" class="btn btn-primary btn-glow w-100 mt-15" id="btn-login-submit">
+                        Giriş Yap <i class="fa-solid fa-chevron-right"></i>
+                    </button>
                 </div>
 
-                <button class="btn btn-primary btn-glow w-100 mt-20" id="btn-login-submit">Giriş Yap / Devam Et <i
-                        class="fa-solid fa-chevron-right"></i></button>
+                <!-- REGISTER PANEL -->
+                <div id="auth-register-panel" class="hidden">
+                    <div style="display:flex; align-items:center; gap:14px; margin-bottom:12px; background:rgba(249,115,22,0.06); padding:10px 12px; border-radius:12px; border:1px solid rgba(249,115,22,0.18);">
+                        <img id="reg-avatar-preview" src="/icons/icon-192.png" alt="Profil Fotoğrafı" style="width:54px; height:54px; border-radius:50%; object-fit:cover; border:2px solid var(--neon-orange); flex-shrink:0;">
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:0.8rem; font-weight:700; color:var(--text-primary); margin-bottom:6px;">Profil Fotoğrafı (İsteğe Bağlı)</div>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-reg-avatar-file" style="font-size:0.75rem; padding:5px 10px;">
+                                    <i class="fa-solid fa-image"></i> Galeri / Dosya Seç
+                                </button>
+                                <input type="file" id="reg-avatar-file" accept="image/*" hidden>
+                            </div>
+                            <input type="url" id="reg-avatar-url" placeholder="veya İnternetten Fotoğraf URL'si yapıştır" style="width:100%; margin-top:6px; font-size:0.75rem; padding:6px 8px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reg-username-input">Kullanıcı Adı</label>
+                        <input type="text" id="reg-username-input" placeholder="Örn: sporcu1 (harf, rakam, _)" style="width:100%;" autocomplete="username">
+                    </div>
+                    <div class="form-group mt-10">
+                        <label for="reg-password-input">Şifre</label>
+                        <input type="password" id="reg-password-input" placeholder="En az 3 karakter" style="width:100%;" autocomplete="new-password">
+                    </div>
+                    <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:0.85rem; cursor:pointer; color:var(--text-secondary);">
+                        <input type="checkbox" id="reg-remember-check" checked style="width:16px; height:16px; accent-color:var(--neon-orange);">
+                        <span>Beni Hatırla (Sonraki girişte otomatik aç)</span>
+                    </label>
+                    <button type="button" class="btn btn-primary btn-glow w-100 mt-15" id="btn-register-submit">
+                        Kayıt Ol ve Başla <i class="fa-solid fa-check"></i>
+                    </button>
+                </div>
+
                 <button type="button" class="btn btn-secondary w-100 mt-10" id="btn-login-download-app"
                     style="border-color: rgba(249,115,22,0.3); color: var(--neon-orange);">
                     <i class="fa-solid fa-download"></i> Uygulamayı İndir (Win / Android / iOS / Mac)
@@ -1104,23 +1152,67 @@
                 </div>
             </section>
 
-            <!-- TAB: Social / Leaderboard -->
+            <!-- TAB: Social / Leaderboard & Calorie Calendar -->
             <section id="tab-social" class="tab-content">
-                <div class="card-header" style="margin-bottom: 20px;">
-                    <h3><i class="fa-solid fa-users text-neon-purple"></i> Sosyal & Liderlik Tablosu</h3>
-                    <p class="subtitle">Diğer kullanıcıların kaldırış PR'larını ve aktif antrenman programlarını
-                        inceleyin.</p>
+                <div class="card-header" style="margin-bottom: 16px;">
+                    <h3><i class="fa-solid fa-users text-neon-purple"></i> Sosyal, Çevrimiçi Arkadaşlar & Kalori Takvimi</h3>
+                    <p class="subtitle">Kendi günlük makrolarını, çevrimiçi arkadaşlarını, PR skorlarını ve takvim üzerinden geçmiş kalori kayıtlarını takip et.</p>
                 </div>
 
-                <div class="glass-card animate-slide-up" style="padding: 20px; overflow-x: auto;">
+                <!-- My Own Daily Summary Card (Always at Top) -->
+                <div id="social-my-summary" class="glass-card animate-slide-up" style="padding: 18px; margin-bottom: 18px; border: 1.5px solid rgba(249,115,22,0.28); background: linear-gradient(135deg, rgba(249,115,22,0.06), rgba(139,92,246,0.06));">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <img id="social-my-avatar" src="/icons/icon-192.png" alt="Profil" style="width:52px; height:52px; border-radius:50%; object-fit:cover; border:2px solid var(--neon-orange);">
+                            <div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <strong id="social-my-name" style="font-size:1.05rem; color:var(--text-primary);">-</strong>
+                                    <span style="font-size:0.72rem; background:rgba(16,185,129,0.15); color:#059669; padding:2px 8px; border-radius:999px; font-weight:700;">● Çevrimiçi</span>
+                                </div>
+                                <div id="social-my-username" style="font-size:0.78rem; color:var(--text-muted);">@-</div>
+                                <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-social-change-avatar" style="font-size:0.72rem; padding:3px 8px;">
+                                        <i class="fa-solid fa-camera"></i> Fotoğraf Değiştir
+                                    </button>
+                                    <input type="file" id="social-avatar-file" accept="image/*" hidden>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <div style="background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:8px 12px; text-align:center; min-width:82px;">
+                                <div style="font-size:0.7rem; color:var(--text-secondary);">Kalori</div>
+                                <strong id="social-my-cal" style="font-size:1rem; color:var(--neon-orange);">0 kcal</strong>
+                            </div>
+                            <div style="background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:8px 12px; text-align:center; min-width:74px;">
+                                <div style="font-size:0.7rem; color:var(--text-secondary);">Protein</div>
+                                <strong id="social-my-pro" style="font-size:1rem; color:#0ea5e9;">0 g</strong>
+                            </div>
+                            <div style="background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:8px 12px; text-align:center; min-width:74px;">
+                                <div style="font-size:0.7rem; color:var(--text-secondary);">Karb</div>
+                                <strong id="social-my-carb" style="font-size:1rem; color:#10b981;">0 g</strong>
+                            </div>
+                            <div style="background:#fff; border:1px solid var(--border-color); border-radius:10px; padding:8px 12px; text-align:center; min-width:74px;">
+                                <div style="font-size:0.7rem; color:var(--text-secondary);">Yağ</div>
+                                <strong id="social-my-fat" style="font-size:1rem; color:#8b5cf6;">0 g</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Friends Online + Today Macros + PR Table -->
+                <div class="glass-card animate-slide-up" style="padding: 20px; overflow-x: auto; margin-bottom: 18px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                        <h4 style="margin:0; font-family:var(--font-header);"><i class="fa-solid fa-signal text-neon-green"></i> Arkadaşlar & Günlük Makro / PR Durumu</h4>
+                        <span id="social-online-count" style="font-size:0.78rem; color:#059669; font-weight:700;">0 Çevrimiçi</span>
+                    </div>
                     <table class="social-table" style="width: 100%; border-collapse: collapse; text-align: left;">
                         <thead>
                             <tr
                                 style="border-bottom: 2px solid var(--border-color); color: var(--text-secondary); font-weight:600;">
                                 <th style="padding: 12px 8px;">Kullanıcı</th>
-                                <th style="padding: 12px 8px;">Boy / Kilo</th>
+                                <th style="padding: 12px 8px;">Bugünkü Makro (Kcal / P / K / Y)</th>
                                 <th style="padding: 12px 8px; text-align: center;">Squat PR</th>
-                                <th style="padding: 12px 8px; text-align: center;">Bench Press PR</th>
+                                <th style="padding: 12px 8px; text-align: center;">Bench PR</th>
                                 <th style="padding: 12px 8px; text-align: center;">Deadlift PR</th>
                                 <th style="padding: 12px 8px; text-align: center;">İşlem</th>
                             </tr>
@@ -1129,6 +1221,30 @@
                             <!-- JS ile doldurulacak -->
                         </tbody>
                     </table>
+                </div>
+
+                <!-- Shared Calorie Calendar -->
+                <div id="social-calendar-card" class="glass-card animate-slide-up" style="padding: 20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                        <div>
+                            <h4 style="margin:0; font-family:var(--font-header);"><i class="fa-solid fa-calendar-days text-neon-orange"></i> Arkadaşlar Kalori Takvimi</h4>
+                            <p class="subtitle" style="font-size:0.78rem; margin-top:2px;">Detaylı kalori, protein, karbonhidrat ve yağ bilgilerini görmek için herhangi bir güne tıklayın.</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <select id="social-cal-user-filter" style="padding:6px 10px; border-radius:8px; font-size:0.82rem;">
+                                <option value="all">Tümü (Ben & Arkadaşlar)</option>
+                            </select>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btn-cal-prev"><i class="fa-solid fa-chevron-left"></i></button>
+                            <strong id="social-cal-month-label" style="min-width:110px; text-align:center; font-size:0.9rem;">-</strong>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btn-cal-next"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px; text-align:center; font-size:0.75rem; font-weight:700; color:var(--text-secondary); margin-bottom:6px;">
+                        <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+                    </div>
+                    <div id="social-calendar-grid" style="display:grid; grid-template-columns:repeat(7, 1fr); gap:6px;">
+                        <!-- JS ile doldurulacak -->
+                    </div>
                 </div>
             </section>
         </main>
@@ -1393,6 +1509,17 @@
                     Verileriniz inceleniyor, Koçunuz rapor hazırlıyor... 🧠💬
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Social Day Detail Modal -->
+    <div id="social-day-modal" class="modal-overlay hidden" style="z-index: 9998;">
+        <div class="glass-card modal-card fade-in" style="max-width: 560px; width: 100%; max-height: 88vh; overflow-y: auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:14px;">
+                <h3 id="social-day-modal-title" style="margin:0;">📅 Gün Detayı</h3>
+                <button type="button" class="btn-icon" id="btn-close-social-day-modal" style="font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="social-day-modal-body" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
     </div>
 

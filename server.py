@@ -99,6 +99,9 @@ def init_db():
             username        TEXT PRIMARY KEY,
             profile_json    TEXT NOT NULL DEFAULT '{}',
             api_key_enc     TEXT DEFAULT '',
+            password_hash   TEXT DEFAULT '',
+            avatar_data     TEXT DEFAULT '',
+            last_seen       TEXT DEFAULT '',
             created_at      TEXT DEFAULT (datetime('now')),
             updated_at      TEXT DEFAULT (datetime('now'))
         );
@@ -150,6 +153,15 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_pr_user ON pr_history(username, exercise);
         """)
+        for col_def in [
+            "ALTER TABLE users ADD COLUMN password_hash TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN avatar_data TEXT DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN last_seen TEXT DEFAULT ''",
+        ]:
+            try:
+                conn.execute(col_def)
+            except Exception:
+                pass
     print("[OK] SQLite veritabani hazir:", DB_PATH)
 
 # ─────────────────────────────────────────────
@@ -363,18 +375,129 @@ def db_list_users():
         rows = conn.execute("SELECT username FROM users").fetchall()
     return [r["username"] for r in rows]
 
-def db_social_users():
+import hashlib
+import secrets
+from datetime import datetime, timedelta
+
+def _hash_password(password: str, salt: str = None) -> str:
+    salt = salt or secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 100000)
+    return f"{salt}${dk.hex()}"
+
+def _verify_password(password: str, stored_hash: str) -> bool:
+    if not stored_hash or "$" not in stored_hash:
+        return False
+    salt, _ = stored_hash.split("$", 1)
+    return secrets.compare_digest(_hash_password(password, salt), stored_hash)
+
+def db_auth_register(data: dict):
+    raw_user = (data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+    avatar_data = (data.get("avatar_data") or "").strip()
+    if not raw_user or not re.match(r"^[a-z0-9_]+$", raw_user):
+        return {"error": "Geçerli bir kullanıcı adı girin (sadece harf, rakam ve _)."}, 400
+    if len(password) < 3:
+        return {"error": "Şifre en az 3 karakter olmalıdır."}, 400
+
     with get_db() as conn:
-        rows = conn.execute("SELECT username, profile_json FROM users").fetchall()
+        existing = conn.execute("SELECT username FROM users WHERE username=?", (raw_user,)).fetchone()
+        if existing:
+            return {"error": "Bu kullanıcı adı zaten kayıtlı! Giriş Yap sekmesini kullanın."}, 409
+        pw_hash = _hash_password(password)
+        now_iso = datetime.utcnow().isoformat()
+        conn.execute(
+            "INSERT INTO users (username, profile_json, password_hash, avatar_data, last_seen) VALUES (?, '{}', ?, ?, ?)",
+            (raw_user, pw_hash, avatar_data, now_iso)
+        )
+    return {"status": "ok", "username": raw_user, "avatar_data": avatar_data}, 200
+
+def db_auth_login(data: dict):
+    raw_user = (data.get("username") or "").strip().lower()
+    password = data.get("password") or ""
+    if not raw_user:
+        return {"error": "Kullanıcı adı gerekli."}, 400
+
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT username, password_hash, avatar_data FROM users WHERE username=?",
+            (raw_user,)
+        ).fetchone()
+        if not row:
+            return {"error": "Kullanıcı bulunamadı. Lütfen önce Kayıt Olun."}, 404
+        stored_hash = row["password_hash"] or ""
+        if stored_hash:
+            if not _verify_password(password, stored_hash):
+                return {"error": "Kullanıcı adı veya şifre hatalı."}, 401
+        else:
+            if len(password) < 3:
+                return {"error": "Hesabınız için en az 3 karakterli bir şifre belirleyin."}, 400
+            conn.execute("UPDATE users SET password_hash=? WHERE username=?", (_hash_password(password), raw_user))
+
+        now_iso = datetime.utcnow().isoformat()
+        conn.execute("UPDATE users SET last_seen=? WHERE username=?", (now_iso, raw_user))
+        avatar = row["avatar_data"] or ""
+    return {"status": "ok", "username": raw_user, "avatar_data": avatar}, 200
+
+def db_auth_avatar(data: dict):
+    raw_user = safe_username(data.get("username"))
+    avatar_data = (data.get("avatar_data") or "").strip()
+    now_iso = datetime.utcnow().isoformat()
+    with get_db() as conn:
+        conn.execute("UPDATE users SET avatar_data=?, last_seen=? WHERE username=?", (avatar_data, now_iso, raw_user))
+    return {"status": "ok", "avatar_data": avatar_data}
+
+def db_auth_heartbeat(data: dict):
+    raw_user = safe_username(data.get("username"))
+    now_iso = datetime.utcnow().isoformat()
+    with get_db() as conn:
+        conn.execute("UPDATE users SET last_seen=? WHERE username=?", (now_iso, raw_user))
+    return {"status": "ok"}
+
+def _is_online(last_seen_str: str) -> bool:
+    if not last_seen_str:
+        return False
+    try:
+        dt = datetime.fromisoformat(last_seen_str.replace("Z", ""))
+        return (datetime.utcnow() - dt) < timedelta(minutes=5)
+    except Exception:
+        return False
+
+def db_social_users():
+    today_str = str(date.today())
+    with get_db() as conn:
+        rows = conn.execute("SELECT username, profile_json, avatar_data, last_seen FROM users").fetchall()
+        logs_rows = conn.execute(
+            "SELECT username, nutrition_json, meals_json FROM daily_logs WHERE log_date=?",
+            (today_str,)
+        ).fetchall()
+    logs_map = {}
+    for lr in logs_rows:
+        try:
+            nut = json.loads(lr["nutrition_json"] or "{}")
+            meals = json.loads(lr["meals_json"] or "[]")
+            logs_map[lr["username"]] = {
+                "calories": nut.get("calories", 0),
+                "protein": nut.get("protein", 0),
+                "carbs": nut.get("carbs", 0),
+                "fat": nut.get("fat", 0),
+                "meals_count": len(meals),
+            }
+        except Exception:
+            pass
+
     result = []
     for row in rows:
         try:
-            profile = json.loads(row["profile_json"])
+            profile = json.loads(row["profile_json"] or "{}")
             if profile.get("privacy") == "private":
                 continue
+            uname = row["username"]
             result.append({
-                "username": row["username"],
-                "name": profile.get("name", row["username"]),
+                "username": uname,
+                "name": profile.get("name") or uname,
+                "avatar_data": row["avatar_data"] or profile.get("avatar_data", ""),
+                "is_online": _is_online(row["last_seen"] or ""),
+                "last_seen": row["last_seen"] or "",
                 "gender": profile.get("gender", "male"),
                 "weight": profile.get("weight", 70),
                 "height": profile.get("height", 170),
@@ -382,11 +505,65 @@ def db_social_users():
                 "tone": profile.get("tone", "brom"),
                 "privacy": profile.get("privacy", "public"),
                 "prs": profile.get("prs", {}),
-                "workout": profile.get("workoutTemplate")
+                "workout": profile.get("workoutTemplate"),
+                "today_nutrition": logs_map.get(uname, {"calories": 0, "protein": 0, "carbs": 0, "fat": 0, "meals_count": 0})
             })
         except Exception:
             continue
     return result
+
+def db_social_calendar(month: str = None):
+    month_prefix = month or str(date.today())[:7]
+    with get_db() as conn:
+        u_rows = conn.execute("SELECT username, profile_json, avatar_data FROM users").fetchall()
+        l_rows = conn.execute(
+            "SELECT username, log_date, nutrition_json, meals_json, workout_json FROM daily_logs WHERE log_date LIKE ?",
+            (f"{month_prefix}%",)
+        ).fetchall()
+
+    users_meta = {}
+    for ur in u_rows:
+        try:
+            prof = json.loads(ur["profile_json"] or "{}")
+            if prof.get("privacy") == "private":
+                continue
+            users_meta[ur["username"]] = {
+                "name": prof.get("name") or ur["username"],
+                "avatar_data": ur["avatar_data"] or prof.get("avatar_data", "")
+            }
+        except Exception:
+            pass
+
+    days = {}
+    for lr in l_rows:
+        uname = lr["username"]
+        if uname not in users_meta:
+            continue
+        try:
+            nut = json.loads(lr["nutrition_json"] or "{}")
+            meals = json.loads(lr["meals_json"] or "[]")
+            wo = json.loads(lr["workout_json"] or "null")
+            cal = int(nut.get("calories", 0) or 0)
+            pro = int(nut.get("protein", 0) or 0)
+            carb = int(nut.get("carbs", 0) or 0)
+            fat = int(nut.get("fat", 0) or 0)
+            if cal == 0 and len(meals) == 0 and not wo:
+                continue
+            d = lr["log_date"]
+            days.setdefault(d, []).append({
+                "username": uname,
+                "name": users_meta[uname]["name"],
+                "avatar_data": users_meta[uname]["avatar_data"],
+                "calories": cal,
+                "protein": pro,
+                "carbs": carb,
+                "fat": fat,
+                "meals_count": len(meals),
+                "workout_done": bool(wo and (wo.get("exercises") or wo.get("completed")))
+            })
+        except Exception:
+            continue
+    return {"month": month_prefix, "days": days}
 
 def db_get_chat(user: str = "default", chat_date: str = None):
     username = safe_username(user)
@@ -853,6 +1030,36 @@ if USE_FASTAPI:
     def social_users():
         return db_social_users()
 
+    @app.get("/api/social/calendar")
+    def social_calendar(month: str = Query(None)):
+        return db_social_calendar(month)
+
+    @app.post("/api/auth/register")
+    async def auth_register(request: Request):
+        data = await request.json()
+        res, code = db_auth_register(data)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
+    @app.post("/api/auth/login")
+    async def auth_login(request: Request):
+        data = await request.json()
+        res, code = db_auth_login(data)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
+    @app.post("/api/auth/avatar")
+    async def auth_avatar(request: Request):
+        data = await request.json()
+        return db_auth_avatar(data)
+
+    @app.post("/api/auth/heartbeat")
+    async def auth_heartbeat(request: Request):
+        data = await request.json()
+        return db_auth_heartbeat(data)
+
     @app.get("/api/chat")
     def get_chat(user: str = Query("default"), chat_date: str = Query(None)):
         return db_get_chat(user, chat_date)
@@ -994,7 +1201,25 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             return super().do_GET()
 
         try:
-            if path == "/api/profile":
+            if path == "/api/auth/register":
+                data = self._read_json()
+                res, code = db_auth_register(data)
+                return self._send_json(res, code)
+
+            elif path == "/api/auth/login":
+                data = self._read_json()
+                res, code = db_auth_login(data)
+                return self._send_json(res, code)
+
+            elif path == "/api/auth/avatar":
+                data = self._read_json()
+                return self._send_json(db_auth_avatar(data))
+
+            elif path == "/api/auth/heartbeat":
+                data = self._read_json()
+                return self._send_json(db_auth_heartbeat(data))
+
+            elif path == "/api/profile":
                 prof = db_get_profile(user)
                 if prof is None:
                     return self._send_json({"detail": "Profile not found"}, 404)
@@ -1016,6 +1241,10 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
 
             elif path == "/api/social/users":
                 return self._send_json(db_social_users())
+
+            elif path == "/api/social/calendar":
+                month = qs.get("month", [None])[0]
+                return self._send_json(db_social_calendar(month))
 
             elif path == "/api/chat":
                 chat_date = qs.get("chat_date", [None])[0]
@@ -1063,7 +1292,25 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
         user = qs.get("user", [None])[0]
 
         try:
-            if path == "/api/profile":
+            if path == "/api/auth/register":
+                data = self._read_json()
+                res, code = db_auth_register(data)
+                return self._send_json(res, code)
+
+            elif path == "/api/auth/login":
+                data = self._read_json()
+                res, code = db_auth_login(data)
+                return self._send_json(res, code)
+
+            elif path == "/api/auth/avatar":
+                data = self._read_json()
+                return self._send_json(db_auth_avatar(data))
+
+            elif path == "/api/auth/heartbeat":
+                data = self._read_json()
+                return self._send_json(db_auth_heartbeat(data))
+
+            elif path == "/api/profile":
                 data = self._read_json()
                 return self._send_json(db_save_profile(data, user))
 
