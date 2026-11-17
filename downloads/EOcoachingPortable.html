@@ -2752,6 +2752,8 @@ form {
                             <button type="button" class="btn btn-secondary mt-10" id="btn-logout"
                                 style="width: 100%;"><i class="fa-solid fa-right-from-bracket"></i> Oturumu Kapat /
                                 Kullanıcı Değiştir</button>
+                            <button type="button" class="btn btn-secondary mt-10" id="btn-delete-account"
+                                style="width: 100%; border-color: rgba(239,68,68,0.4); color: #dc2626;"><i class="fa-solid fa-trash"></i> Kullanıcıyı Sil</button>
                         </form>
                     </div>
                 </div>
@@ -3125,6 +3127,23 @@ form {
                 <button type="button" class="btn-icon" id="btn-close-social-day-modal" style="font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="social-day-modal-body" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+
+    <!-- Delete Account Password Confirmation Modal -->
+    <div id="delete-account-modal" class="modal-overlay hidden" style="z-index: 9998;">
+        <div class="glass-card modal-card fade-in" style="max-width: 420px; width: 100%;">
+            <h3 style="color:#dc2626; margin-top:0;"><i class="fa-solid fa-triangle-exclamation"></i> Kullanıcıyı Sil</h3>
+            <p class="subtitle" style="margin-bottom:12px;">Bu işlem geri alınamaz! Hesabınızı ve tüm verilerinizi kalıcı olarak silmek için şifrenizi girin.</p>
+            <div id="delete-account-error" class="hidden" style="background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3); padding:8px 10px; border-radius:8px; font-size:0.8rem; font-weight:700; margin-bottom:10px;"></div>
+            <div class="form-group">
+                <label for="delete-account-password">Şifreniz</label>
+                <input type="password" id="delete-account-password" placeholder="Hesap şifrenizi girin" style="width:100%;">
+            </div>
+            <div class="modal-buttons" style="margin-top:16px;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-delete-account">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-delete-account" style="background:#dc2626;">Kalıcı Olarak Sil</button>
+            </div>
         </div>
     </div>
 
@@ -3539,6 +3558,23 @@ window.AICOACHING_STANDALONE_MODE = true;
             return jsonResponse({ status: "ok" });
         }
 
+        if (path === "/api/auth/delete-user" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            const pw = bodyData.password || "";
+            if (db.auth[uname] && db.auth[uname].password && db.auth[uname].password !== pw) {
+                return jsonResponse({ error: "Şifre hatalı! Hesap silinemedi." }, 401);
+            }
+            delete db.auth[uname];
+            if (db.users) delete db.users[uname];
+            if (db.logs) delete db.logs[uname];
+            if (db.chats) delete db.chats[uname];
+            if (db.favorites) delete db.favorites[uname];
+            if (db.prs) delete db.prs[uname];
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", message: "Hesap kalıcı olarak silindi." });
+        }
+
         if (path === "/api/social/users") {
             const todayStr = new Date().toISOString().slice(0, 10);
             const authMap = db.auth || {};
@@ -3870,6 +3906,23 @@ window.AICOACHING_STANDALONE_MODE = true;
                 saveLocalDB(db);
             }
             return jsonResponse({ status: "ok" });
+        }
+
+        if (path === "/api/auth/delete-user" && method === "POST") {
+            if (!db.auth) db.auth = {};
+            const uname = (bodyData.username || user).toLowerCase();
+            const pw = bodyData.password || "";
+            if (db.auth[uname] && db.auth[uname].password && db.auth[uname].password !== pw) {
+                return jsonResponse({ error: "Şifre hatalı! Hesap silinemedi." }, 401);
+            }
+            delete db.auth[uname];
+            if (db.users) delete db.users[uname];
+            if (db.logs) delete db.logs[uname];
+            if (db.chats) delete db.chats[uname];
+            if (db.favorites) delete db.favorites[uname];
+            if (db.prs) delete db.prs[uname];
+            saveLocalDB(db);
+            return jsonResponse({ status: "ok", message: "Hesap kalıcı olarak silindi." });
         }
 
         if (path === "/api/social/users") {
@@ -6768,6 +6821,58 @@ async function initLoginSession() {
             }
         });
     }
+
+    // Kullanıcıyı şifre doğrulamasıyla kalıcı olarak silme
+    const deleteAccountBtn = document.getElementById("btn-delete-account");
+    const deleteModal = document.getElementById("delete-account-modal");
+    const deletePassInput = document.getElementById("delete-account-password");
+    const deleteErrEl = document.getElementById("delete-account-error");
+    const cancelDeleteBtn = document.getElementById("btn-cancel-delete-account");
+    const confirmDeleteBtn = document.getElementById("btn-confirm-delete-account");
+
+    deleteAccountBtn?.addEventListener("click", () => {
+        if (!deleteModal) return;
+        if (deletePassInput) deletePassInput.value = "";
+        deleteErrEl?.classList.add("hidden");
+        deleteModal.classList.remove("hidden");
+    });
+    cancelDeleteBtn?.addEventListener("click", () => deleteModal?.classList.add("hidden"));
+    confirmDeleteBtn?.addEventListener("click", async () => {
+        const pw = deletePassInput?.value || "";
+        if (!pw) {
+            if (deleteErrEl) {
+                deleteErrEl.textContent = "Lütfen şifrenizi girin.";
+                deleteErrEl.classList.remove("hidden");
+            }
+            return;
+        }
+        try {
+            const res = await fetch("/api/auth/delete-user", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username: state.username, password: pw })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                if (deleteErrEl) {
+                    deleteErrEl.textContent = data.detail || data.error || "Şifre hatalı.";
+                    deleteErrEl.classList.remove("hidden");
+                }
+                return;
+            }
+            localStorage.removeItem(`avatar_${state.username}`);
+            localStorage.removeItem("remembered_user");
+            localStorage.removeItem("active_username");
+            sessionStorage.removeItem("active_username");
+            alert("Hesabınız ve tüm verileriniz kalıcı olarak silindi.");
+            location.reload();
+        } catch (err) {
+            if (deleteErrEl) {
+                deleteErrEl.textContent = "Silme işlemi sırasında hata oluştu.";
+                deleteErrEl.classList.remove("hidden");
+            }
+        }
+    });
 
     function startHeartbeat(username) {
         const ping = () => fetch("/api/auth/heartbeat", {

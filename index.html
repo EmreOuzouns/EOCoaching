@@ -1136,6 +1136,8 @@
                             <button type="button" class="btn btn-secondary mt-10" id="btn-logout"
                                 style="width: 100%;"><i class="fa-solid fa-right-from-bracket"></i> Oturumu Kapat /
                                 Kullanıcı Değiştir</button>
+                            <button type="button" class="btn btn-secondary mt-10" id="btn-delete-account"
+                                style="width: 100%; border-color: rgba(239,68,68,0.4); color: #dc2626;"><i class="fa-solid fa-trash"></i> Kullanıcıyı Sil</button>
                         </form>
                     </div>
                 </div>
@@ -1509,6 +1511,23 @@
                 <button type="button" class="btn-icon" id="btn-close-social-day-modal" style="font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div id="social-day-modal-body" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+    </div>
+
+    <!-- Delete Account Password Confirmation Modal -->
+    <div id="delete-account-modal" class="modal-overlay hidden" style="z-index: 9998;">
+        <div class="glass-card modal-card fade-in" style="max-width: 420px; width: 100%;">
+            <h3 style="color:#dc2626; margin-top:0;"><i class="fa-solid fa-triangle-exclamation"></i> Kullanıcıyı Sil</h3>
+            <p class="subtitle" style="margin-bottom:12px;">Bu işlem geri alınamaz! Hesabınızı ve tüm verilerinizi kalıcı olarak silmek için şifrenizi girin.</p>
+            <div id="delete-account-error" class="hidden" style="background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3); padding:8px 10px; border-radius:8px; font-size:0.8rem; font-weight:700; margin-bottom:10px;"></div>
+            <div class="form-group">
+                <label for="delete-account-password">Şifreniz</label>
+                <input type="password" id="delete-account-password" placeholder="Hesap şifrenizi girin" style="width:100%;">
+            </div>
+            <div class="modal-buttons" style="margin-top:16px;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-delete-account">İptal</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-delete-account" style="background:#dc2626;">Kalıcı Olarak Sil</button>
+            </div>
         </div>
     </div>
 

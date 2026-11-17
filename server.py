@@ -453,6 +453,24 @@ def db_auth_heartbeat(data: dict):
         conn.execute("UPDATE users SET last_seen=? WHERE username=?", (now_iso, raw_user))
     return {"status": "ok"}
 
+def db_auth_delete_user(data: dict):
+    raw_user = safe_username(data.get("username"))
+    password = data.get("password") or ""
+    if not raw_user:
+        return {"error": "Kullanıcı adı gerekli."}, 400
+    with get_db() as conn:
+        row = conn.execute("SELECT username, password_hash FROM users WHERE username=?", (raw_user,)).fetchone()
+        if not row:
+            return {"error": "Kullanıcı bulunamadı."}, 404
+        stored_hash = row["password_hash"] or ""
+        if stored_hash and not _verify_password(password, stored_hash):
+            return {"error": "Şifre hatalı! Hesap silinemedi."}, 401
+        if not stored_hash and len(password) < 3:
+            return {"error": "Onay için şifrenizi girin."}, 400
+        for tbl in ["users", "daily_logs", "chat_history", "meal_favorites", "pr_history"]:
+            conn.execute(f"DELETE FROM {tbl} WHERE username=?", (raw_user,))
+    return {"status": "ok", "message": "Hesap kalıcı olarak silindi."}, 200
+
 def _is_online(last_seen_str: str) -> bool:
     if not last_seen_str:
         return False
@@ -1060,6 +1078,14 @@ if USE_FASTAPI:
         data = await request.json()
         return db_auth_heartbeat(data)
 
+    @app.post("/api/auth/delete-user")
+    async def auth_delete_user(request: Request):
+        data = await request.json()
+        res, code = db_auth_delete_user(data)
+        if code != 200:
+            raise HTTPException(status_code=code, detail=res.get("error", "Error"))
+        return res
+
     @app.get("/api/chat")
     def get_chat(user: str = Query("default"), chat_date: str = Query(None)):
         return db_get_chat(user, chat_date)
@@ -1219,6 +1245,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
                 data = self._read_json()
                 return self._send_json(db_auth_heartbeat(data))
 
+            elif path == "/api/auth/delete-user":
+                data = self._read_json()
+                res, code = db_auth_delete_user(data)
+                return self._send_json(res, code)
+
             elif path == "/api/profile":
                 prof = db_get_profile(user)
                 if prof is None:
@@ -1309,6 +1340,11 @@ class AICoachingHTTPHandler(SimpleHTTPRequestHandler):
             elif path == "/api/auth/heartbeat":
                 data = self._read_json()
                 return self._send_json(db_auth_heartbeat(data))
+
+            elif path == "/api/auth/delete-user":
+                data = self._read_json()
+                res, code = db_auth_delete_user(data)
+                return self._send_json(res, code)
 
             elif path == "/api/profile":
                 data = self._read_json()
