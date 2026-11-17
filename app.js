@@ -4607,53 +4607,53 @@ function initPWAInstall() {
     const copyLinkBtn = document.getElementById("btn-copy-download-link");
     const shareLinkInput = document.getElementById("share-download-link-input");
 
-    async function openDownloadModal() {
-        if (!modal) return;
-        modal.classList.remove("hidden");
-        try {
-            const res = await fetch("/api/network-info");
-            if (res.ok) {
-                const info = await res.json();
-                if (shareLinkInput && info.download_url) {
-                    shareLinkInput.value = info.download_url;
-                }
+    async function smartDownloadOrInstall() {
+        const ua = navigator.userAgent || "";
+        if (/android/i.test(ua)) {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                await deferredPrompt.userChoice;
+                deferredPrompt = null;
+                return;
             }
-        } catch (e) { }
+            if (!window.location.origin.includes("railway.app") && window.location.protocol === "file:") {
+                window.open("https://eocoaching-production.up.railway.app", "_blank", "noopener");
+                return;
+            }
+            alert("Android Ana Ekrana Kurulum:\nChrome sağ üst köşedeki (⋮) menüsünden 'Uygulamayı Yükle / Ana ekrana ekle' seçeneğine dokunun.");
+            return;
+        }
+        if (/iphone|ipad|ipod/i.test(ua)) {
+            window.location.href = "/api/download/ios-profile";
+            return;
+        }
+        if (/macintosh|mac os x/i.test(ua)) {
+            const a = document.createElement("a");
+            a.href = "/api/download/mac";
+            a.download = "EOcoachingmacOS.zip";
+            a.click();
+            showToast("📥 Mac uygulaması indiriliyor!");
+            return;
+        }
+        // Windows / Default
+        const a = document.createElement("a");
+        a.href = window.location.protocol === "file:"
+            ? "https://eocoaching-production.up.railway.app/api/download/windows"
+            : "/api/download/windows";
+        a.download = "EOcoachingWindows.exe";
+        a.click();
+        showToast("📥 Windows uygulaması indiriliyor!");
     }
 
-    installBtn?.addEventListener("click", openDownloadModal);
-    headerDlBtn?.addEventListener("click", openDownloadModal);
-    loginDlBtn?.addEventListener("click", openDownloadModal);
+    installBtn?.addEventListener("click", smartDownloadOrInstall);
+    headerDlBtn?.addEventListener("click", smartDownloadOrInstall);
+    loginDlBtn?.addEventListener("click", smartDownloadOrInstall);
     closeBtn?.addEventListener("click", () => modal?.classList.add("hidden"));
-
-    const loginInstallPwaBtn = document.getElementById("btn-login-install-pwa");
-    const isStandaloneDisplay = window.matchMedia && (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone);
-    const isMobileUA = /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
-    if (!isStandaloneDisplay && isMobileUA && loginInstallPwaBtn) {
-        loginInstallPwaBtn.classList.remove("hidden");
-    }
 
     window.addEventListener("beforeinstallprompt", (e) => {
         e.preventDefault();
         deferredPrompt = e;
         nativeBanner?.classList.remove("hidden");
-        if (!isStandaloneDisplay) loginInstallPwaBtn?.classList.remove("hidden");
-    });
-
-    loginInstallPwaBtn?.addEventListener("click", async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-            return;
-        }
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent || "")) {
-            if (confirm("iPhone / iPad Ana Ekrana Kurulum:\n\n1. Safari'de alttaki Paylaş (↑) simgesine dokunun ve 'Ana Ekrana Ekle' seçin.\n\nVEYA Tamam'a basarak otomatik iOS profilini (.mobileconfig) indirin.")) {
-                window.location.href = "/api/download/ios-profile";
-            }
-        } else {
-            alert("Android Ana Ekrana Kurulum:\nChrome sağ üst köşedeki (⋮) menüsünden 'Uygulamayı Yükle / Ana ekrana ekle' seçeneğine dokunun.");
-        }
     });
 
     triggerNativeBtn?.addEventListener("click", async () => {

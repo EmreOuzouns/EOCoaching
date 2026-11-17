@@ -1,4 +1,4 @@
-const CACHE_NAME = "eocoach-cache-v20";
+const CACHE_NAME = "eocoach-cache-v21";
 const ASSETS = [
   "/",
   "/index.html",
