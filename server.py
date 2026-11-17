@@ -6,6 +6,7 @@ fallback for Python 3.15+ environments where binary wheels (e.g., pydantic_core)
 """
 
 import os
+import re
 import sys
 import json
 import sqlite3
